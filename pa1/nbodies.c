@@ -4,8 +4,14 @@
  * N-bodies simulation (sequential)
  */
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define G 1.0
+#ifndef N
+ #define N 256
+#endif
 
 struct body
 {
@@ -16,22 +22,52 @@ struct body
     double v_y;    // Y component of velocity
 };
 
-int N = 256;
+struct body b[N];
 
-double f(i, j) {
-
+double dist(int i, int j) {
+    return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
+        (b[j].r_x - b[i].r_x)*(b[j].r_x - b[i].r_x));
 };
 
-int main(int argc, char **argv) {
+double fx(int i, int j) {
+    double d = dist(i, j) * dist(i, j) * dist(i, j);
+    return (G * b[i].m * b[j].m * (b[j].r_x - b[i].r_x))/d;
+};
 
-    if (argc > 2) {
-        printf("Error: expected zero or one arguments.");
-        return(EXIT_FAILURE);
-    } else if (argc == 2 && atoi(argv[1])) {
-        N = atoi(argv[1]);
+double fy(int i, int j) {
+    double d = dist(i, j) * dist(i, j) * dist(i, j);
+    return (G * b[i].m * b[j].m * (b[j].r_y - b[i].r_y))/d;
+};
+
+double fx(int i) {
+    double result = 0;
+    for(int j = 0; k <= N; j++) {
+        if (j == i) {
+            continue;
+        }
+        result += fx(i, j);
     }
+};
 
-    printf("Simulating %d bodies.\n", N);
+double fx(int i) {
+    double result = 0;
+    for(int j = 0; k <= N; j++) {
+        if (j == i) {
+            continue;
+        }
+        result += fy(i, j);
+    }
+};
+
+double ax(int i) {
+    return fx(i)/b[i].m;
+}
+
+double ay(int i) {
+    return fy(i)/b[i].m;
+}
+
+int main() {
 
     return EXIT_SUCCESS;
 };
