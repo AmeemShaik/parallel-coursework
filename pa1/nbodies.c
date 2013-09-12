@@ -29,33 +29,35 @@ double dist(int i, int j) {
         (b[j].r_x - b[i].r_x)*(b[j].r_x - b[i].r_x));
 };
 
-double fx(int i, int j) {
+double _fx(int i, int j) {
     double d = dist(i, j) * dist(i, j) * dist(i, j);
     return (G * b[i].m * b[j].m * (b[j].r_x - b[i].r_x))/d;
 };
 
-double fy(int i, int j) {
+double _fy(int i, int j) {
     double d = dist(i, j) * dist(i, j) * dist(i, j);
     return (G * b[i].m * b[j].m * (b[j].r_y - b[i].r_y))/d;
 };
 
 double fx(int i) {
     double result = 0;
-    for(int j = 0; k <= N; j++) {
+    int j;
+    for(j = 0; j <= N; j++) {
         if (j == i) {
             continue;
         }
-        result += fx(i, j);
+        result += _fx(i, j);
     }
 };
 
-double fx(int i) {
+double fy(int i) {
     double result = 0;
-    for(int j = 0; k <= N; j++) {
+    int j;
+    for(j = 0; j <= N; j++) {
         if (j == i) {
             continue;
         }
-        result += fy(i, j);
+        result += _fy(i, j);
     }
 };
 
