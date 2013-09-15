@@ -85,7 +85,16 @@ double init(int i, double m, double ri0_x, double ri0_y, double vi0_x, double vi
 }
 
 void printState(int i) {
-    printf("[body %d] r(%f, %f) v(%f, %f) a(%f, %f)\n", i, b[i].r_x, b[i].r_y, b[i].v_x, b[i].v_y, b[i].a_x, b[i].a_y);
+    printf("[body %d] m(%f) r(%f, %f) v(%f, %f) a(%f, %f)\n",
+        i,
+        b[i].m,
+        b[i].r_x,
+        b[i].r_y,
+        b[i].v_x,
+        b[i].v_y,
+        b[i].a_x,
+        b[i].a_y
+    );
 }
 
 int main(int argc, char **argv) {
@@ -113,7 +122,7 @@ int main(int argc, char **argv) {
     for(j=0; j < n; j++) {
         init(
             j,
-            (double)rand() * (MASS_MAX - MASS_MIN) / (double)RAND_MAX + MASS_MIN,
+            (double)rand() * (MASS_MAX - MASS_MIN) / (double)RAND_MAX + MASS_MIN,   
             (double)rand() * (X_MAX - X_MIN) / (double)RAND_MAX + X_MIN,
             (double)rand() * (Y_MAX - Y_MIN) / (double)RAND_MAX + Y_MIN,
             0.0,
