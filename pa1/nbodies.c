@@ -9,6 +9,11 @@
 #include <stdlib.h>
 
 #define G 1.0
+#define X_MIN 0.0
+#define X_MAX 1024.0
+#define Y_MIN 0.0
+#define Y_MAX 1024.0
+
 int n, k;
 
 struct body
@@ -22,7 +27,7 @@ struct body
     double a_y;
 };
 
-struct body b[n];
+struct body *b;
 
 double dist(int i, int j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
@@ -76,6 +81,10 @@ double init(int i, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
     b[i].v_y = vi0_y;
 }
 
+void printState(int i) {
+    printf("[body %d] r(%f, %f) v(%f, %f)\n", i, b[i].r_x, b[i].r_y, b[i].v_x, b[i].v_y);
+}
+
 int main(int argc, char **argv) {
 
     if (argc != 3) {
@@ -91,23 +100,47 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    int t, timeStep;
+    b = (struct body *) malloc( n * sizeof(struct body));
 
-    //todo: parameterize
-    timeStep = 1;
+    //Todo: parameterize timestep
+    int t, timeStep = 1;
 
+    // Initialize bodies
+    int j;
+    for(j=0; j < n; j++) {
+        init(
+            j,
+            (double)rand() * (X_MAX - X_MIN) / (double)RAND_MAX + X_MIN,
+            (double)rand() * (Y_MAX - Y_MIN) / (double)RAND_MAX + Y_MIN,
+            0.0,
+            0.0
+        );
+        printState(j);
+    }
+
+    printf("Simulating...\n");
+
+    // Integrate k steps
     for(t=1; t <= k; t++) {
-        for(int i = 0; i < n ; i++){
+        int i;
+
+        for(i = 0; i < n ; i++){
             b[i].a_x = ax(i);
             b[i].a_y = ay(i);
         }
 
-        for(int i = 0; i < n ; i++){
+        for(i = 0; i < n ; i++){
             b[i].r_x += timeStep * b[i].v_x;
             b[i].r_y += timeStep * b[i].v_y;
             b[i].v_x += timeStep * b[i].a_x;
             b[i].v_y += timeStep * b[i].a_y;
         }
+    }
+
+    printf("Final states after %d steps:\n", k);
+
+    for(j=0; j < n; j++) {
+        printState(j);
     }
 
     return EXIT_SUCCESS;
