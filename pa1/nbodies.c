@@ -1,7 +1,7 @@
 /* 
  * COMP633 - Programming Assignment 1(a)
  * Zach Cross (zcross@cs.unc.edu)
- * N-bodies simulation (sequential)
+ * n-bodies simulation (sequential)
  */
 
 #include <math.h>
@@ -9,9 +9,7 @@
 #include <stdlib.h>
 
 #define G 1.0
-#ifndef N
- #define N 256
-#endif
+int n, k;
 
 struct body
 {
@@ -20,9 +18,11 @@ struct body
     double r_y;    // Y component of position
     double v_x;    // X component of velocity
     double v_y;    // Y component of velocity
+    double a_x;
+    double a_y;
 };
 
-struct body b[N];
+struct body b[n];
 
 double dist(int i, int j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
@@ -42,7 +42,7 @@ double _fy(int i, int j) {
 double fx(int i) {
     double result = 0;
     int j;
-    for(j = 0; j <= N; j++) {
+    for(j = 0; j <= n; j++) {
         if (j == i) {
             continue;
         }
@@ -53,7 +53,7 @@ double fx(int i) {
 double fy(int i) {
     double result = 0;
     int j;
-    for(j = 0; j <= N; j++) {
+    for(j = 0; j <= n; j++) {
         if (j == i) {
             continue;
         }
@@ -69,7 +69,46 @@ double ay(int i) {
     return fy(i)/b[i].m;
 }
 
-int main() {
+double init(int i, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
+    b[i].r_x = ri0_x;
+    b[i].r_y = ri0_y;
+    b[i].v_x = vi0_x;
+    b[i].v_y = vi0_y;
+}
+
+int main(int argc, char **argv) {
+
+    if (argc != 3) {
+        printf("Expected 2 arguments: nBodies kSteps.\n");
+        return EXIT_FAILURE;
+    }
+
+    n = atoi(argv[1]);
+    k = atoi(argv[2]);
+
+    if (n <= 0 || k <= 0) {
+        printf("Expected non-zero values for n and k.\n");
+        return EXIT_FAILURE;
+    }
+
+    int t, timeStep;
+
+    //todo: parameterize
+    timeStep = 1;
+
+    for(t=1; t <= k; t++) {
+        for(int i = 0; i < n ; i++){
+            b[i].a_x = ax(i);
+            b[i].a_y = ay(i);
+        }
+
+        for(int i = 0; i < n ; i++){
+            b[i].r_x += timeStep * b[i].v_x;
+            b[i].r_y += timeStep * b[i].v_y;
+            b[i].v_x += timeStep * b[i].a_x;
+            b[i].v_y += timeStep * b[i].a_y;
+        }
+    }
 
     return EXIT_SUCCESS;
 };
