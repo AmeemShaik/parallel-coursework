@@ -55,6 +55,7 @@ double fx(int i) {
         }
         result += _fx(i, j);
     }
+    return result;
 };
 
 double fy(int i) {
@@ -66,6 +67,7 @@ double fy(int i) {
         }
         result += _fy(i, j);
     }
+    return result;
 };
 
 double ax(int i) {
