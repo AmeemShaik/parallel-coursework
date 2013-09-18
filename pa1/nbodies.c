@@ -18,7 +18,7 @@
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
 
-int n, k;
+unsigned short n, k;
 double timestep;
 
 struct body
@@ -34,24 +34,24 @@ struct body
 
 struct body *b;
 
-double dist(int i, int j) {
+double dist(unsigned short i, unsigned short j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
         (b[j].r_x - b[i].r_x)*(b[j].r_x - b[i].r_x));
 };
 
-double _fx(int i, int j) {
+double _fx(unsigned short i, unsigned short j) {
     double d = dist(i, j) * dist(i, j) * dist(i, j);
     return (G * b[i].m * b[j].m * (b[j].r_x - b[i].r_x))/d;
 };
 
-double _fy(int i, int j) {
+double _fy(unsigned short i, unsigned short j) {
     double d = dist(i, j) * dist(i, j) * dist(i, j);
     return (G * b[i].m * b[j].m * (b[j].r_y - b[i].r_y))/d;
 };
 
-double fx(int i) {
+double fx(unsigned short i) {
     double result = 0;
-    int j;
+    unsigned short j;
     for(j = 0; j <= n; j++) {
         if (j == i) {
             continue;
@@ -61,9 +61,9 @@ double fx(int i) {
     return result;
 };
 
-double fy(int i) {
+double fy(unsigned short i) {
     double result = 0;
-    int j;
+    unsigned short j;
     for(j = 0; j <= n; j++) {
         if (j == i) {
             continue;
@@ -73,15 +73,15 @@ double fy(int i) {
     return result;
 };
 
-double ax(int i) {
+double ax(unsigned short i) {
     return fx(i)/b[i].m;
 }
 
-double ay(int i) {
+double ay(unsigned short i) {
     return fy(i)/b[i].m;
 }
 
-double init(int i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
+double init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
     b[i].m = m;
     b[i].r_x = ri0_x;
     b[i].r_y = ri0_y;
@@ -89,7 +89,7 @@ double init(int i, double m, double ri0_x, double ri0_y, double vi0_x, double vi
     b[i].v_y = vi0_y;
 }
 
-void printState(int i) {
+void printState(unsigned short i) {
     printf("[body %d] m(%f) r(%f, %f) v(%f, %f) a(%f, %f)\n",
         i,
         b[i].m,
@@ -124,10 +124,10 @@ int main(int argc, char **argv) {
     b = (struct body *) malloc( n * sizeof(struct body));
 
     //Todo: parameterize timestep
-    int t;
+    unsigned short t;
 
     // Initialize bodies
-    int j;
+    unsigned short j;
     for(j=0; j < n; j++) {
 
         double vx = (double)rand() * (INIT_V_MAX - INIT_V_MIN) / (double)RAND_MAX + INIT_V_MIN;
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
             (double)rand() * (Y_MAX - Y_MIN) / (double)RAND_MAX + Y_MIN,
             vx,
             vy
-        );
+        );  
         printState(j);
     }
 
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 
     // Integrate k steps
     for(t=1; t <= k; t++) {
-        int i;
+        unsigned short i;
 
         for(i = 0; i < n ; i++){
             b[i].a_x = ax(i);
