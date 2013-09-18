@@ -53,12 +53,15 @@ double _fy(unsigned short i, unsigned short j) {
 void compute_forces() {
     unsigned short i, j;
     double fij_x, fij_y;
+
+    // reset forces to 0 since we'll accumulate
     for(i = 0 ; i < n; i++) {
-        // reset forces to 0 since we'll accumulate
         b[i].f_x = 0;
         b[i].f_y = 0;
+    }
 
-        // compute fij for all i<j ... and update f on i and f on j
+    // compute fij for all i<j ... and update f on i and f on j
+    for(i = 0 ; i < n; i++) {
         for(j=0; j < i; j++) {
             fij_x = _fx(i, j);
             fij_y = _fy(i, j);
@@ -76,22 +79,23 @@ void compute_forces() {
 void compute_forces() {
     unsigned short i, j;
     double fij_x, fij_y;
-    for(i = 0 ; i < n; i++) {
-        // reset forces to 0 since we'll accumulate
+
+    // reset forces to 0 since we'll accumulate
+    for(i = 0; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
+    }
 
-        // compute fij for all i<j ... and update f on i and f on j
+    // compute fij for all i,j where i!=j
+    for(i = 0 ; i < n; i++) {
         for(j=0; j < n; j++) {
             
             if(i==j)
                 continue;
 
-            b[i].f_x = _fx(i, j);
-            b[i].f_y = _fy(i, j);
-
+            b[i].f_x += _fx(i, j);
+            b[i].f_y += _fy(i, j);
         }
-
     }
 }
 #endif
