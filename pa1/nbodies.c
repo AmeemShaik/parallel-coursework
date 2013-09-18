@@ -28,11 +28,12 @@ struct body
     double r_y;    // Y component of position
     double v_x;    // X component of velocity
     double v_y;    // Y component of velocity
-    double a_x;
-    double a_y;
+    double f_x;
+    double f_y;
 };
 
 struct body *b;
+double **forcesx, **forcesy;
 
 double dist(unsigned short i, unsigned short j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
@@ -48,6 +49,43 @@ double _fy(unsigned short i, unsigned short j) {
     double d = dist(i, j) * dist(i, j) * dist(i, j);
     return (G * b[i].m * b[j].m * (b[j].r_y - b[i].r_y))/d;
 };
+
+#ifdef NEWTONSTHIRD
+double fx(unsigned short i) {
+    double result = 0;
+    unsigned short j;
+    for(j = 0; j < n; j++) {
+        if (i == j) { // Dont compute fii
+             continue;
+        } else if (i < j) { // fij : i < j
+            double fij = _fx(i, j);
+            result += fij;
+            forcesx[i][j] = fij;
+        } else { // fij : i > j ==> use -fji where i < j
+            result -= forcesx[j][i];
+        }
+    }
+    return result;
+}
+
+double fy(unsigned short i) {
+    double result = 0;
+    unsigned short j;
+    for(j = 0; j < n; j++) {
+        if (i == j) { // Dont compute fii
+             continue;
+        } else if (i < j) { // fij : i < j
+            double fij = _fy(i, j);
+            result += fij;
+            forcesy[i][j] = fij;
+        } else { // fij : i > j ==> use -fji where i < j
+            result -= forcesy[j][i];
+        }
+    }
+    return result;
+}
+
+#else
 
 double fx(unsigned short i) {
     double result = 0;
@@ -73,13 +111,7 @@ double fy(unsigned short i) {
     return result;
 };
 
-double ax(unsigned short i) {
-    return fx(i)/b[i].m;
-}
-
-double ay(unsigned short i) {
-    return fy(i)/b[i].m;
-}
+#endif
 
 double init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
     b[i].m = m;
@@ -90,16 +122,23 @@ double init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x
 }
 
 void printState(unsigned short i) {
-    printf("[body %d] m(%f) r(%f, %f) v(%f, %f) a(%f, %f)\n",
+    printf("[body %d] m(%f) r(%f, %f) v(%f, %f)\n",
         i,
         b[i].m,
         b[i].r_x,
         b[i].r_y,
         b[i].v_x,
-        b[i].v_y,
-        b[i].a_x,
-        b[i].a_y
+        b[i].v_y
     );
+}
+
+double** array2D(unsigned short i, unsigned short j) {
+    double** result = (double**) malloc(i * sizeof(double*));
+    unsigned short k;
+    for( k = 0; k < i; k++) {
+        result[k] = (double*) malloc(j * sizeof(double));
+    }
+    return result;
 }
 
 int main(int argc, char **argv) {
@@ -122,6 +161,8 @@ int main(int argc, char **argv) {
     }
 
     b = (struct body *) malloc( n * sizeof(struct body));
+    forcesx = array2D(n, n);
+    forcesy = array2D(n, n);
 
     //Todo: parameterize timestep
     unsigned short t;
@@ -157,16 +198,17 @@ int main(int argc, char **argv) {
     for(t=1; t <= k; t++) {
         unsigned short i;
 
+        // Compute forces on all bodies
         for(i = 0; i < n ; i++){
-            b[i].a_x = ax(i);
-            b[i].a_y = ay(i);
+            b[i].f_x = fx(i);
+            b[i].f_y = fy(i);
         }
 
         for(i = 0; i < n ; i++){
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
-            b[i].v_x += timestep * b[i].a_x;
-            b[i].v_y += timestep * b[i].a_y;
+            b[i].v_x += timestep * b[i].f_x/b[i].m;
+            b[i].v_y += timestep * b[i].f_y/b[i].m;
             #ifdef VERBOSE
             printState(i);
             #endif
@@ -179,5 +221,7 @@ int main(int argc, char **argv) {
         printState(j);
     }
 
+    free(forcesx);
+    free(forcesy);
     return EXIT_SUCCESS;
 };
