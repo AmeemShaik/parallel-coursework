@@ -62,16 +62,24 @@ void compute_forces() {
 
     // compute fij for all i<j ... and update f on i and f on j
     for(i = 0 ; i < n; i++) {
+
+        double result_i_x = 0,
+               result_i_y = 0;
+
         for(j=0; j < i; j++) {
             fij_x = _fx(i, j);
             fij_y = _fy(i, j);
 
-            b[i].f_x += fij_x;
-            b[i].f_y += fij_y;
+            result_i_x += fij_x;
+            result_i_y += fij_y;
 
             b[j].f_x -= fij_x;
             b[j].f_y -= fij_y;
         }
+
+        b[i].f_x = result_i_x;
+        b[i].f_y = result_i_y;
+
     }
 }
 #else
@@ -88,14 +96,22 @@ void compute_forces() {
 
     // compute fij for all i,j where i!=j
     for(i = 0 ; i < n; i++) {
+
+        double result_x = 0,
+               result_y = 0;
+
         for(j=0; j < n; j++) {
             
             if(i==j)
                 continue;
 
-            b[i].f_x += _fx(i, j);
-            b[i].f_y += _fy(i, j);
+            result_x += _fx(i, j);
+            result_y += _fy(i, j);
         }
+
+        b[i].f_x = result_x;
+        b[i].f_y = result_y;
+
     }
 }
 #endif
