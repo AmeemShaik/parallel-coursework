@@ -33,7 +33,10 @@ struct body
 };
 
 struct body *b;
+
+#ifdef NEWTONSTHIRD
 double **forcesx, **forcesy;
+#endif
 
 double dist(unsigned short i, unsigned short j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
@@ -132,6 +135,7 @@ void printState(unsigned short i) {
     );
 }
 
+#ifdef NEWTONSTHIRD
 double** array2D(unsigned short i, unsigned short j) {
     double** result = (double**) malloc(i * sizeof(double*));
     unsigned short k;
@@ -140,6 +144,7 @@ double** array2D(unsigned short i, unsigned short j) {
     }
     return result;
 }
+#endif
 
 int main(int argc, char **argv) {
 
@@ -161,8 +166,11 @@ int main(int argc, char **argv) {
     }
 
     b = (struct body *) malloc( n * sizeof(struct body));
+    
+    #ifdef NEWTONSTHIRD
     forcesx = array2D(n, n);
     forcesy = array2D(n, n);
+    #endif
 
     //Todo: parameterize timestep
     unsigned short t;
@@ -221,7 +229,10 @@ int main(int argc, char **argv) {
         printState(j);
     }
 
+    #ifdef NEWTONSTHIRD
     free(forcesx);
     free(forcesy);
+    #endif
+
     return EXIT_SUCCESS;
 };
