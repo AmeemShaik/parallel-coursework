@@ -34,10 +34,6 @@ struct body
 
 struct body *b;
 
-#ifdef NEWTONSTHIRD
-double **forcesx, **forcesy;
-#endif
-
 double dist(unsigned short i, unsigned short j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
         (b[j].r_x - b[i].r_x)*(b[j].r_x - b[i].r_x));
@@ -54,66 +50,50 @@ double _fy(unsigned short i, unsigned short j) {
 };
 
 #ifdef NEWTONSTHIRD
-double fx(unsigned short i) {
-    double result = 0;
-    unsigned short j;
-    for(j = 0; j < n; j++) {
-        if (i == j) { // Dont compute fii
-             continue;
-        } else if (i < j) { // fij : i < j
-            double fij = _fx(i, j);
-            result += fij;
-            forcesx[i][j] = fij;
-        } else { // fij : i > j ==> use -fji where i < j
-            result -= forcesx[j][i];
+void compute_forces() {
+    unsigned short i, j;
+    double fij_x, fij_y;
+    for(i = 0 ; i < n; i++) {
+        // reset forces to 0 since we'll accumulate
+        b[i].f_x = 0;
+        b[i].f_y = 0;
+
+        // compute fij for all i<j ... and update f on i and f on j
+        for(j=0; j < i; j++) {
+            fij_x = _fx(i, j);
+            fij_y = _fy(i, j);
+
+            b[i].f_x += fij_x;
+            b[i].f_y += fij_y;
+
+            b[j].f_x -= fij_x;
+            b[j].f_y -= fij_y;
         }
     }
-    return result;
 }
-
-double fy(unsigned short i) {
-    double result = 0;
-    unsigned short j;
-    for(j = 0; j < n; j++) {
-        if (i == j) { // Dont compute fii
-             continue;
-        } else if (i < j) { // fij : i < j
-            double fij = _fy(i, j);
-            result += fij;
-            forcesy[i][j] = fij;
-        } else { // fij : i > j ==> use -fji where i < j
-            result -= forcesy[j][i];
-        }
-    }
-    return result;
-}
-
 #else
 
-double fx(unsigned short i) {
-    double result = 0;
-    unsigned short j;
-    for(j = 0; j <= n; j++) {
-        if (j == i) {
-            continue;
-        }
-        result += _fx(i, j);
-    }
-    return result;
-};
+void compute_forces() {
+    unsigned short i, j;
+    double fij_x, fij_y;
+    for(i = 0 ; i < n; i++) {
+        // reset forces to 0 since we'll accumulate
+        b[i].f_x = 0;
+        b[i].f_y = 0;
 
-double fy(unsigned short i) {
-    double result = 0;
-    unsigned short j;
-    for(j = 0; j <= n; j++) {
-        if (j == i) {
-            continue;
-        }
-        result += _fy(i, j);
-    }
-    return result;
-};
+        // compute fij for all i<j ... and update f on i and f on j
+        for(j=0; j < n; j++) {
+            
+            if(i==j)
+                continue;
 
+            b[i].f_x = _fx(i, j);
+            b[i].f_y = _fy(i, j);
+
+        }
+
+    }
+}
 #endif
 
 double init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
@@ -135,17 +115,6 @@ void printState(unsigned short i) {
     );
 }
 
-#ifdef NEWTONSTHIRD
-double** array2D(unsigned short i, unsigned short j) {
-    double** result = (double**) malloc(i * sizeof(double*));
-    unsigned short k;
-    for( k = 0; k < i; k++) {
-        result[k] = (double*) malloc(j * sizeof(double));
-    }
-    return result;
-}
-#endif
-
 int main(int argc, char **argv) {
 
     if (argc != 4) {
@@ -166,11 +135,6 @@ int main(int argc, char **argv) {
     }
 
     b = (struct body *) malloc( n * sizeof(struct body));
-    
-    #ifdef NEWTONSTHIRD
-    forcesx = array2D(n, n);
-    forcesy = array2D(n, n);
-    #endif
 
     //Todo: parameterize timestep
     unsigned short t;
@@ -207,10 +171,7 @@ int main(int argc, char **argv) {
         unsigned short i;
 
         // Compute forces on all bodies
-        for(i = 0; i < n ; i++){
-            b[i].f_x = fx(i);
-            b[i].f_y = fy(i);
-        }
+        compute_forces();
 
         for(i = 0; i < n ; i++){
             b[i].r_x += timestep * b[i].v_x;
@@ -228,11 +189,6 @@ int main(int argc, char **argv) {
     for(j=0; j < n; j++) {
         printState(j);
     }
-
-    #ifdef NEWTONSTHIRD
-    free(forcesx);
-    free(forcesy);
-    #endif
 
     return EXIT_SUCCESS;
 };
