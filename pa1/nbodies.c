@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h> 
 
 #define G 1.0
 #define X_MIN 0.0
@@ -138,7 +139,7 @@ void printState(unsigned short i) {
 int main(int argc, char **argv) {
 
     if (argc != 4) {
-        printf("Expected 2 arguments: numBodies timeStep numSteps.\n");
+        printf("Expected 3 arguments: numBodies timeStep numSteps.\n");
         return EXIT_FAILURE;
     }
 
@@ -187,6 +188,8 @@ int main(int argc, char **argv) {
     printf("Simulating...\n");
 
     // Integrate k steps
+	clock_t timeForFunc;
+	timeForFunc = clock();
     for(t=1; t <= k; t++) {
         unsigned short i;
 
@@ -203,12 +206,14 @@ int main(int argc, char **argv) {
             #endif
         }
     }
+	timeForFunc = clock()- timeForFunc;
 
     printf("Final states after %d steps:\n", k);
 
     for(j=0; j < n; j++) {
         printState(j);
     }
+	printf("It took %d seconds\n", timeForFunc);
 
     return EXIT_SUCCESS;
 };
