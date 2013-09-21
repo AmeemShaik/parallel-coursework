@@ -18,6 +18,7 @@
 #define MASS_MAX 0.975
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
+#define NEWTONSTHIRD
 
 unsigned short n, k;
 double timestep;
@@ -35,18 +36,23 @@ struct body
 
 struct body *b;
 
+/*probably the most expensive function, since it gets
+called so often. Want to minize calls as much as possible
+*/
 double dist(unsigned short i, unsigned short j) {
     return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
         (b[j].r_x - b[i].r_x)*(b[j].r_x - b[i].r_x));
 };
 
-double _fx(unsigned short i, unsigned short j) {
-    double d = dist(i, j) * dist(i, j) * dist(i, j);
+double _fx(unsigned short i, unsigned short j, double d) {
+	//made the distance a param to reduce calls to dist
+	//d = dist(i,j)*dist(i,j)*dist(i,j);
     return (G * b[i].m * b[j].m * (b[j].r_x - b[i].r_x))/d;
 };
 
-double _fy(unsigned short i, unsigned short j) {
-    double d = dist(i, j) * dist(i, j) * dist(i, j);
+double _fy(unsigned short i, unsigned short j, double d) {
+	//made the distance a param to reduce calls to dist
+	//d = dist(i,j)*dist(i,j)*dist(i,j);
     return (G * b[i].m * b[j].m * (b[j].r_y - b[i].r_y))/d;
 };
 
@@ -68,8 +74,9 @@ void compute_forces() {
                result_i_y = 0;
 
         for(j=0; j < i; j++) {
-            fij_x = _fx(i, j);
-            fij_y = _fy(i, j);
+			double distance = dist(i,j);
+            fij_x = _fx(i, j, 0);
+            fij_y = _fy(i, j, 0);
 
             result_i_x += fij_x;
             result_i_y += fij_y;
@@ -84,35 +91,30 @@ void compute_forces() {
     }
 }
 #else
-
 void compute_forces() {
     unsigned short i, j;
     double fij_x, fij_y;
-
     // reset forces to 0 since we'll accumulate
     for(i = 0; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
-
     // compute fij for all i,j where i!=j
     for(i = 0 ; i < n; i++) {
 
         double result_x = 0,
                result_y = 0;
-
         for(j=0; j < n; j++) {
-            
+            double distance = dist(i,j);
             if(i==j)
                 continue;
-
-            result_x += _fx(i, j);
-            result_y += _fy(i, j);
+            result_x += _fx(i, j, distance);
+            result_y += _fy(i, j, distance);
         }
-
+		
+		
         b[i].f_x = result_x;
         b[i].f_y = result_y;
-
     }
 }
 #endif
@@ -162,6 +164,11 @@ int main(int argc, char **argv) {
 
     // Initialize bodies
     unsigned short j;
+	double testM[] = {0.577852,0.919489};
+	double testrx[] = {0.458650,0.679296};
+	double testry[] = {0.755605,0.678865};
+	double testvx[] = {-0.649317, -0.495775};
+	double testvy[] = {-0.478834, -0.798279};
     for(j=0; j < n; j++) {
 
         double vx = (double)rand() * (INIT_V_MAX - INIT_V_MIN) / (double)RAND_MAX + INIT_V_MIN;
@@ -181,21 +188,25 @@ int main(int argc, char **argv) {
             (double)rand() * (Y_MAX - Y_MIN) / (double)RAND_MAX + Y_MIN,
             vx,
             vy
-        );  
+        );
+		/*init(
+            j,
+            testM[j],
+            testrx[j],
+            testry[j],
+            testvx[j],
+            testvy[j]
+        );*/
         printState(j);
     }
 
     printf("Simulating...\n");
 
     // Integrate k steps
-	clock_t timeForFunc;
-	timeForFunc = clock();
     for(t=1; t <= k; t++) {
         unsigned short i;
-
         // Compute forces on all bodies
         compute_forces();
-
         for(i = 0; i < n ; i++){
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
@@ -206,14 +217,14 @@ int main(int argc, char **argv) {
             #endif
         }
     }
-	timeForFunc = clock()- timeForFunc;
+	
 
-    printf("Final states after %d steps:\n", k);
+    //printf("Final states after %d steps:\n", k);
 
     for(j=0; j < n; j++) {
         printState(j);
     }
-	printf("It took %d seconds\n", timeForFunc);
+	
 
     return EXIT_SUCCESS;
 };
