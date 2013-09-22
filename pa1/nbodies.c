@@ -36,31 +36,6 @@ struct body
 
 struct body *b;
 
-/*probably the most expensive function, since it gets
-called so often. Want to minize calls as much as possible
-*/
-/*
-double dist(unsigned short i, unsigned short j) {
-	double r_yj = b[j].r_y;
-	double r_yi = b[i].r_y;
-	double r_xj = b[j].r_x;
-	double r_xi = b[i].r_x;
-    return sqrt((r_yj - r_yi)*(r_yj - r_yi) +
-        (r_xj - r_xi)*(r_xj - r_xi));
-};
-
-double _fx(unsigned short i, unsigned short j, double constantVal) {
-	//made the distance a param to reduce calls to dist
-	//d = dist(i,j)*dist(i,j)*dist(i,j);
-    return constantVal*(b[j].r_x - b[i].r_x);
-};
-
-double _fy(unsigned short i, unsigned short j, double constantVal) {
-	//made the distance a param to reduce calls to dist
-	//d = dist(i,j)*dist(i,j)*dist(i,j);
-    return constantVal*(b[j].r_y - b[i].r_y);
-};
-*/
 #ifdef NEWTONSTHIRD
 void compute_forces() {
     unsigned short i, j;
@@ -76,14 +51,17 @@ void compute_forces() {
     for(i = 0 ; i < n; i++) {
         double result_i_x = 0,
                result_i_y = 0;
+		//trying to minimize array accesses
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
         for(j=0; j < i; j++) {
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
+			//trying to exploit the fact that multiplication is faster than division
 			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
 				(r_xj - r_xi)*(r_xj - r_xi));
+			//this is a constant value that is same for fx and fy. Can reuse it
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
             fij_x = constantVal*(r_xj - r_xi);
             fij_y = constantVal*(r_yj - r_yi);
@@ -92,7 +70,6 @@ void compute_forces() {
             b[j].f_x -= fij_x;
             b[j].f_y -= fij_y;
         }
-
         b[i].f_x = result_i_x;
         b[i].f_y = result_i_y;
     }
@@ -178,6 +155,8 @@ int main(int argc, char **argv) {
 
     // Initialize bodies
     unsigned short j;
+	
+	//for test mode. Can remove later
 	double testM[] = {0.577852,0.919489};
 	double testrx[] = {0.458650,0.679296};
 	double testry[] = {0.755605,0.678865};
@@ -195,7 +174,7 @@ int main(int argc, char **argv) {
             vy = vy/vmagSq - 0.00125;
         }
 
-        
+        //for testing. Can remove later
 		#ifdef TESTMODE
 		init(
             j,
