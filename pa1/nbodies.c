@@ -39,23 +39,28 @@ struct body *b;
 /*probably the most expensive function, since it gets
 called so often. Want to minize calls as much as possible
 */
+/*
 double dist(unsigned short i, unsigned short j) {
-    return sqrt((b[j].r_y - b[i].r_y)*(b[j].r_y - b[i].r_y) +
-        (b[j].r_x - b[i].r_x)*(b[j].r_x - b[i].r_x));
+	double r_yj = b[j].r_y;
+	double r_yi = b[i].r_y;
+	double r_xj = b[j].r_x;
+	double r_xi = b[i].r_x;
+    return sqrt((r_yj - r_yi)*(r_yj - r_yi) +
+        (r_xj - r_xi)*(r_xj - r_xi));
 };
 
-double _fx(unsigned short i, unsigned short j, double d) {
+double _fx(unsigned short i, unsigned short j, double constantVal) {
 	//made the distance a param to reduce calls to dist
 	//d = dist(i,j)*dist(i,j)*dist(i,j);
-    return (G * b[i].m * b[j].m * (b[j].r_x - b[i].r_x))/d;
+    return constantVal*(b[j].r_x - b[i].r_x);
 };
 
-double _fy(unsigned short i, unsigned short j, double d) {
+double _fy(unsigned short i, unsigned short j, double constantVal) {
 	//made the distance a param to reduce calls to dist
 	//d = dist(i,j)*dist(i,j)*dist(i,j);
-    return (G * b[i].m * b[j].m * (b[j].r_y - b[i].r_y))/d;
+    return constantVal*(b[j].r_y - b[i].r_y);
 };
-
+*/
 #ifdef NEWTONSTHIRD
 void compute_forces() {
     unsigned short i, j;
@@ -69,25 +74,27 @@ void compute_forces() {
 
     // compute fij for all i<j ... and update f on i and f on j
     for(i = 0 ; i < n; i++) {
-
         double result_i_x = 0,
                result_i_y = 0;
-
+		double r_yi = b[i].r_y;
+		double r_xi = b[i].r_x;
+		double iMass = b[i].m;
         for(j=0; j < i; j++) {
-			double distance = dist(i,j);
-            fij_x = _fx(i, j, 0);
-            fij_y = _fy(i, j, 0);
-
+			double r_yj = b[j].r_y;
+			double r_xj = b[j].r_x;
+			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
+				(r_xj - r_xi)*(r_xj - r_xi));
+			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
+            fij_x = constantVal*(r_xj - r_xi);
+            fij_y = constantVal*(r_yj - r_yi);
             result_i_x += fij_x;
             result_i_y += fij_y;
-
             b[j].f_x -= fij_x;
             b[j].f_y -= fij_y;
         }
 
         b[i].f_x = result_i_x;
         b[i].f_y = result_i_y;
-
     }
 }
 #else
@@ -104,12 +111,19 @@ void compute_forces() {
 
         double result_x = 0,
                result_y = 0;
+		double r_yi = b[i].r_y;
+		double r_xi = b[i].r_x;
+		double iMass = b[i].m;
         for(j=0; j < n; j++) {
-            double distance = dist(i,j);
+			double r_yj = b[j].r_y;
+			double r_xj = b[j].r_x;
+            double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
+				(r_xj - r_xi)*(r_xj - r_xi));
+			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
             if(i==j)
                 continue;
-            result_x += _fx(i, j, distance);
-            result_y += _fy(i, j, distance);
+            result_x += constantVal*(r_xj - r_xi);
+            result_y += constantVal*(r_yj - r_yi);
         }
 		
 		
@@ -181,7 +195,18 @@ int main(int argc, char **argv) {
             vy = vy/vmagSq - 0.00125;
         }
 
-        init(
+        
+		#ifdef TESTMODE
+		init(
+            j,
+            testM[j],
+            testrx[j],
+            testry[j],
+            testvx[j],
+            testvy[j]
+        );
+		#else
+		init(
             j,
             (double)rand() * (MASS_MAX - MASS_MIN) / (double)RAND_MAX + MASS_MIN,   
             (double)rand() * (X_MAX - X_MIN) / (double)RAND_MAX + X_MIN,
@@ -189,15 +214,11 @@ int main(int argc, char **argv) {
             vx,
             vy
         );
-		/*init(
-            j,
-            testM[j],
-            testrx[j],
-            testry[j],
-            testvx[j],
-            testvy[j]
-        );*/
+		#endif
+		
+		#ifdef PRINTMODE
         printState(j);
+		#endif
     }
 
     printf("Simulating...\n");
@@ -213,18 +234,18 @@ int main(int argc, char **argv) {
             b[i].v_x += timestep * b[i].f_x/b[i].m;
             b[i].v_y += timestep * b[i].f_y/b[i].m;
             #ifdef VERBOSE
-            printState(i);
+            //printState(i);
             #endif
         }
     }
 	
 
     //printf("Final states after %d steps:\n", k);
-
+	#ifdef PRINTMODE
     for(j=0; j < n; j++) {
         printState(j);
     }
-	
+	#endif
 
     return EXIT_SUCCESS;
 };
