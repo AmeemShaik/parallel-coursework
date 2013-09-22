@@ -18,6 +18,7 @@
 #define MASS_MAX 0.975
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
+#define NEWTONSTHIRD
 
 unsigned short n, k;
 double timestep;
