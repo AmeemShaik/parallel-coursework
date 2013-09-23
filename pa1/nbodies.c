@@ -1,7 +1,12 @@
 /* 
  * COMP633 - Programming Assignment 1(a)
  * Zach Cross (zcross@cs.unc.edu)
- * n-bodies simulation (sequential)
+ * Ameem Shaik (shaik@cs.unc.edu)
+ *
+ *  n-bodies simulation (sequential)
+ *      Usage: nbodies [number of bodies] [timestep] [number of steps to simulate]
+ * compilation options:
+ *      See Makefile. Executable names are self-explanatory.
  */
 
 #include <math.h>
@@ -18,7 +23,6 @@
 #define MASS_MAX 0.975
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
-#define NEWTONSTHIRD
 
 unsigned short n, k;
 double timestep;
