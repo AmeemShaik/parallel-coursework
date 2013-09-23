@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
     clock_gettime(CLOCK_REALTIME, &endTime);
     time_t timeElapsed = endTime.tv_sec - startTime.tv_sec;
 	printf("Simulated %d steps in %f seconds.\n", k, (float)timeElapsed);
-    printf("Interactions per second: %2.f\n", k * n * n / (1.0*timeElapsed));
+    printf("Interactions per second: %.2f\n", k * n * n / (1.0*timeElapsed));
 
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
