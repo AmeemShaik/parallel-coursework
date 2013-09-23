@@ -133,21 +133,6 @@ void printState(unsigned short i) {
         b[i].v_y
     );
 }
-
-/* returns timespec b - a */
-struct timespec difference(struct timespec a, struct timespec b)
-{
-    struct timespec result;
-    if ((b.tv_nsec - a.tv_nsec) < 0) {
-        result.tv_sec = b.tv_sec - a.tv_sec - 1;
-        result.tv_nsec = ONE_BILLION + b.tv_nsec - a.tv_nsec;
-    } else {
-        result.tv_sec = b.tv_sec - a.tv_sec;
-        result.tv_nsec = b.tv_nsec - a.tv_nsec;
-    }
-    return result;
-}
-
 int main(int argc, char **argv) {
 
     if (argc != 4) {
@@ -220,10 +205,6 @@ int main(int argc, char **argv) {
     }
 
     printf("Simulating...\n");
-
-    struct timespec startTime, endTime;
-
-    clock_gettime(CLOCK_REALTIME, &startTime);
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
@@ -239,11 +220,6 @@ int main(int argc, char **argv) {
             #endif
         }
     }
-    clock_gettime(CLOCK_REALTIME, &endTime);
-    struct timespec timeElapsed = difference(startTime, endTime);
-	printf("Simulated %d steps in %d seconds %ld nanoseconds.\n", k, (int)timeElapsed.tv_sec, (long)timeElapsed.tv_nsec);
-    printf("Interactions per second: %.2f\n", k * n * n / (1.0*timeElapsed.tv_sec + 1.0*timeElapsed.tv_nsec/ONE_BILLION));
-
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
     for(j=0; j < n; j++) {
