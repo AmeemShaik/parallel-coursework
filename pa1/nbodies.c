@@ -137,7 +137,7 @@ void printState(unsigned short i) {
 /* returns timespec b - a */
 struct timespec difference(struct timespec a, struct timespec b)
 {
-    timespec result;
+    struct timespec result;
     if ((b.tv_nsec - a.tv_nsec) < 0) {
         result.tv_sec = b.tv_sec - a.tv_sec - 1;
         result.tv_nsec = ONE_BILLION + b.tv_nsec - a.tv_nsec;
