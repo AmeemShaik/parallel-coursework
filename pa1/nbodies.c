@@ -225,8 +225,8 @@ int main(int argc, char **argv) {
         }
     }
     clock_gettime(CLOCK_REALTIME, &endTime);
-    long timeElapsed = endTime.tv_sec - startTime.tv_sec;
-	printf("Simulated %d steps in %l seconds.\n", k, timeElapsed);
+    time_t timeElapsed = endTime.tv_sec - startTime.tv_sec;
+	printf("Simulated %d steps in %ld seconds.\n", k, timeElapsed);
     printf("Interactions per second: %f\n", k * n * n / timeElapsed);
 
     //printf("Final states after %d steps:\n", k);
