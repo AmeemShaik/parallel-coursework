@@ -135,7 +135,7 @@ void printState(unsigned short i) {
 }
 
 /* returns timespec b - a */
-struct timespec difference(timespec a, timespec b)
+struct timespec difference(struct timespec a, struct timespec b)
 {
     timespec result;
     if ((b.tv_nsec - a.tv_nsec) < 0) {
