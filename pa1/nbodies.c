@@ -135,7 +135,7 @@ void printState(unsigned short i) {
 }
 
 /* returns timespec b - a */
-timespec difference(timespec a, timespec b)
+struct timespec difference(timespec a, timespec b)
 {
     timespec result;
     if ((b.tv_nsec - a.tv_nsec) < 0) {
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
         }
     }
     clock_gettime(CLOCK_REALTIME, &endTime);
-    timespec elapsed = difference(startTime, endTime);
+    struct timespec elapsed = difference(startTime, endTime);
 	printf("Simulated %d steps in %f.%f seconds.\n", k, (float)timeElapsed.tv_sec, (float)timeElapsed.tv_nsec/1000000.0);
     printf("Interactions per second: %.2f\n", k * n * n / (1.0*timeElapsed.tv_sec + 1.0*timeElapsed.tv_nsec/1000000.0));
 
