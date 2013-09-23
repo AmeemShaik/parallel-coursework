@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &endTime);
-	printf("Simulated %d steps in %.3f seconds.\n", k, 1000.0*(endTime.tv_nsec - startTime.tv_nsec));
+	printf("Simulated %d steps in %.3f seconds.\n", k, 1000.0*(endTime.tv_sec - startTime.tv_sec));
 
 
     //printf("Final states after %d steps:\n", k);
