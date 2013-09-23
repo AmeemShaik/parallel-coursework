@@ -206,6 +206,9 @@ int main(int argc, char **argv) {
 
     printf("Simulating...\n");
 
+    struct timespec startTime, endTime;
+
+    clock_gettime(CLOCK_MONOTONIC, &startTime);
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
@@ -221,7 +224,9 @@ int main(int argc, char **argv) {
             #endif
         }
     }
-	
+    clock_gettime(CLOCK_MONOTONIC, &endTime);
+	printf("Simulated %d steps in %.3f seconds.\n", k, 1000.0*(endTime.tv_nsec - startTime.tv_nsec));
+
 
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
