@@ -241,8 +241,8 @@ int main(int argc, char **argv) {
     }
     clock_gettime(CLOCK_REALTIME, &endTime);
     struct timespec timeElapsed = difference(startTime, endTime);
-	printf("Simulated %d steps in %l.%0.3f seconds.\n", k, (float)timeElapsed.tv_sec, (float)timeElapsed.tv_nsec/1000000.0);
-    printf("Interactions per second: %.2f\n", k * n * n / (1.0*timeElapsed.tv_sec + 1.0*timeElapsed.tv_nsec/1000000.0));
+	printf("Simulated %d steps in %d seconds %l nanoseconds.\n", k, (int)timeElapsed.tv_sec, (long)timeElapsed.tv_nsec);
+    printf("Interactions per second: %.2f\n", k * n * n / (1.0*timeElapsed.tv_sec + 1.0*timeElapsed.tv_nsec/ONE_BILLION.0));
 
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
