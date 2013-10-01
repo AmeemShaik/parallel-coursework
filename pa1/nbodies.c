@@ -202,11 +202,13 @@ int main(int argc, char **argv) {
             vy
         );
 		#endif
-		
-		#ifdef PRINTMODE
-        printState(j);
-		#endif
     }
+
+    #ifdef PRINTMODE
+    printf("Initial states:\n");
+    for(j=0; j<n; j++)
+        printState(j);
+    #endif
 
     printf("Simulating...\n");
     // Integrate k steps
