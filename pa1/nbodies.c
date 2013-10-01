@@ -44,7 +44,6 @@ struct body *b;
 #ifdef NEWTONSTHIRD
 void compute_forces() {
     unsigned short i, j;
-    double fij_x, fij_y;
 
     // reset forces to 0 since we'll accumulate
     #pragma omp parallel for shared(b) private(i)
@@ -55,6 +54,7 @@ void compute_forces() {
     // compute fij for all i<j ... and update f on i and f on j
     #pragma omp parallel for shared(b) private(i)
     for(i = 0 ; i < n; i++) {
+        double fij_x, fij_y;
         double result_i_x = 0,
                result_i_y = 0;
 		//trying to minimize array accesses
