@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
         // Compute forces on all bodies
         compute_forces();
 
-        #pragma omp parallel for private(i)
+        #pragma omp parallel for shared(b) private(i)
         for(i = 0; i < n ; i++){
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
