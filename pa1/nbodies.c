@@ -47,12 +47,13 @@ void compute_forces() {
     double fij_x, fij_y;
 
     // reset forces to 0 since we'll accumulate
+    #pragma omp parallel for shared(b) private(i)
     for(i = 0 ; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
-
     // compute fij for all i<j ... and update f on i and f on j
+    #pragma omp parallel for shared(b) private(i)
     for(i = 0 ; i < n; i++) {
         double result_i_x = 0,
                result_i_y = 0;
@@ -82,13 +83,14 @@ void compute_forces() {
 #else
 void compute_forces() {
     unsigned short i, j;
-    double fij_x, fij_y;
     // reset forces to 0 since we'll accumulate
+    #pragma omp parallel for shared(b) private(i)
     for(i = 0; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
     // compute fij for all i,j where i!=j
+    #pragma omp parallel for shared(b) private(i)
     for(i = 0 ; i < n; i++) {
 
         double result_x = 0,
@@ -115,7 +117,7 @@ void compute_forces() {
 }
 #endif
 
-double init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
+void init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
     b[i].m = m;
     b[i].r_x = ri0_x;
     b[i].r_y = ri0_y;
@@ -166,6 +168,8 @@ int main(int argc, char **argv) {
 	double testry[] = {0.755605,0.678865};
 	double testvx[] = {-0.649317, -0.495775};
 	double testvy[] = {-0.478834, -0.798279};
+
+    #pragma omp parallel for private(j)
     for(j=0; j < n; j++) {
 
         double vx = (double)rand() * (INIT_V_MAX - INIT_V_MIN) / (double)RAND_MAX + INIT_V_MIN;
@@ -210,6 +214,8 @@ int main(int argc, char **argv) {
         unsigned short i;
         // Compute forces on all bodies
         compute_forces();
+
+        #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
