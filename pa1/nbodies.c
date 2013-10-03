@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
+#include <omp.h>
 
 #define G 1.0
 #define X_MIN 0.0
@@ -24,7 +25,6 @@
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
 #define ONE_BILLION 1000000000L
-
 unsigned short n, k;
 double timestep;
 
@@ -46,22 +46,25 @@ void compute_forces() {
     unsigned short i, j;
 
     // reset forces to 0 since we'll accumulate
-    #pragma omp parallel for shared(b) private(i)
     for(i = 0 ; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
     // compute fij for all i<j ... and update f on i and f on j
-    #pragma omp parallel for shared(b) private(i)
-    for(i = 0 ; i < n; i++) {
-        double fij_x, fij_y;
-        double result_i_x = 0,
-               result_i_y = 0;
+	
+	//int ID = omp_get_thread_num();
+	//#pragma omp parallel for private(i,j)
+	for(i = 0 ; i < n; i++) {
+		int num = omp_get_thread_num();
+		printf("thread %i i is %i\n",num, i);
+		double fij_x, fij_y;
+		double result_i_x = 0,
+			   result_i_y = 0;
 		//trying to minimize array accesses
-		double r_yi = b[i].r_y;
-		double r_xi = b[i].r_x;
+		 double r_yi = b[i].r_y;
+		 double r_xi = b[i].r_x;
 		double iMass = b[i].m;
-        for(j=0; j < i; j++) {
+		for(j=0; j < i; j++) {
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
 			//trying to exploit the fact that multiplication is faster than division
@@ -69,50 +72,49 @@ void compute_forces() {
 				(r_xj - r_xi)*(r_xj - r_xi));
 			//this is a constant value that is same for fx and fy. Can reuse it
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-            fij_x = constantVal*(r_xj - r_xi);
-            fij_y = constantVal*(r_yj - r_yi);
-            result_i_x += fij_x;
-            result_i_y += fij_y;
-            b[j].f_x -= fij_x;
-            b[j].f_y -= fij_y;
-        }
-        b[i].f_x = result_i_x;
-        b[i].f_y = result_i_y;
-    }
+			fij_x = constantVal*(r_xj - r_xi);
+			fij_y = constantVal*(r_yj - r_yi);
+			result_i_x += fij_x;
+			result_i_y += fij_y;
+			b[j].f_x -= fij_x;
+			b[j].f_y -= fij_y;
+		}
+		b[i].f_x = result_i_x;
+		b[i].f_y = result_i_y;
+
+	}
 }
 #else
 void compute_forces() {
     unsigned short i, j;
     // reset forces to 0 since we'll accumulate
-    #pragma omp parallel for shared(b) private(i)
     for(i = 0; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
     // compute fij for all i,j where i!=j
-    #pragma omp parallel for shared(b) private(i)
-    for(i = 0 ; i < n; i++) {
-
-        double result_x = 0,
-               result_y = 0;
+	#pragma omp parallel for private(i,j)
+    for(i = 0; i < n; i++) {
+        double result_x = 0;
+        double result_y = 0;
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
-        for(j=0; j < n; j++) {
+		for(j=0; j < n; j++) {
+			//printf("j %i, threadNum %i\n",j,omp_get_thread_num());
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
-            double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
+			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
 				(r_xj - r_xi)*(r_xj - r_xi));
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-            if(i==j)
-                continue;
-            result_x += constantVal*(r_xj - r_xi);
-            result_y += constantVal*(r_yj - r_yi);
-        }
-		
-		
-        b[i].f_x = result_x;
-        b[i].f_y = result_y;
+			if(i==j)
+				continue;
+			result_x += constantVal*(r_xj - r_xi); 
+			result_y += constantVal*(r_yj - r_yi);
+		}
+
+		b[i].f_x = result_x;
+		b[i].f_y = result_y;
     }
 }
 #endif
@@ -168,8 +170,7 @@ int main(int argc, char **argv) {
 	double testry[] = {0.755605,0.678865};
 	double testvx[] = {-0.649317, -0.495775};
 	double testvy[] = {-0.478834, -0.798279};
-
-    #pragma omp parallel for private(j)
+	#pragma omp parallel for private(j)
     for(j=0; j < n; j++) {
 
         double vx = (double)rand() * (INIT_V_MAX - INIT_V_MIN) / (double)RAND_MAX + INIT_V_MIN;
@@ -184,13 +185,14 @@ int main(int argc, char **argv) {
 
         //for testing. Can remove later
 		#ifdef TESTMODE
+		double f_j = ((double)j)/n;
 		init(
             j,
-            testM[j],
-            testrx[j],
-            testry[j],
-            testvx[j],
-            testvy[j]
+            1-f_j,
+            f_j,
+            f_j,
+            -f_j,
+            f_j
         );
 		#else
 		init(
@@ -217,7 +219,6 @@ int main(int argc, char **argv) {
         // Compute forces on all bodies
         compute_forces();
 
-        #pragma omp parallel for shared(b) private(i)
         for(i = 0; i < n ; i++){
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
