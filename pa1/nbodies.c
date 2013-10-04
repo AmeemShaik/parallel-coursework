@@ -232,6 +232,7 @@ int main(int argc, char **argv) {
 
         int p = omp_get_max_threads();
 
+        #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
 
             double fx, fy;
@@ -239,13 +240,9 @@ int main(int argc, char **argv) {
             int j;
 
             #ifdef NEWTONSTHIRD
-                #pragma omp parallel for private(j) reduction(+:fx)
                 for(j=0; j < p; j++) {
-                    fx = fx + b[i].f_x[j];
-                }
-                #pragma omp parallel for private(j) reduction(+:fy)
-                for(j=0; j < p; j++) {
-                    fy = fy + b[i].f_y[j];
+                    fx += b[i].f_x[j];
+                    fy += b[i].f_y[j];
                 }
 
             #else
