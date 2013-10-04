@@ -53,6 +53,7 @@ void compute_forces() {
     // reset forces to 0 since we'll accumulate
 
     f_x = (double **)malloc(sizeof(double*) * p);
+    f_y = (double **)malloc(sizeof(double*) * p);
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
         f_x[i] = (double *) malloc(sizeof(double) * n);
