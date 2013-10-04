@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
     double endTime = omp_get_wtime();
     printf("Simulation complete.\n");
     printf("Wall time: %.4f seconds.\n", endTime - startTime);
-    printf("Interactions per second: %d\n", (int)(k*n*n)/(endTime - startTime));
+    printf("Interactions per second: %d\n", (int)((k*n*n)/(endTime - startTime)));
 
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
