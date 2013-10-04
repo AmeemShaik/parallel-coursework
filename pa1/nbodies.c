@@ -25,6 +25,8 @@
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
 #define ONE_BILLION 1000000000L
+#define NUM_THREADS = 4
+
 unsigned short n, k;
 double timestep;
 
@@ -53,7 +55,7 @@ void compute_forces() {
     // compute fij for all i<j ... and update f on i and f on j
 	
 	//int ID = omp_get_thread_num();
-	#pragma omp parallel for private(i,j) shared(b)
+	#pragma omp parallel for private(i,j)
 	for(i = 0 ; i < n; i++) {
 		double fij_x, fij_y;
 		double result_i_x = 0,
@@ -77,11 +79,8 @@ void compute_forces() {
 				b[i].f_y += fij_y;
 				b[j].f_x -= fij_x;
 				b[j].f_y -= fij_y;
-			}
-			
+			}	
 		}
-
-
 	}
 }
 #else
