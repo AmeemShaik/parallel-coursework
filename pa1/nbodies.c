@@ -86,15 +86,16 @@ void compute_forces() {
 #else
 void compute_forces() {
     unsigned short i, j;
+
+    int p = omp_get_num_threads();
     // reset forces to 0 since we'll accumulate
-
-    b[i].f_x = (double *) malloc(1 * sizeof(double));
-    b[i].f_y = (double *) malloc(1 * sizeof(double));
-
-    for(i = 0; i < n; i++) {
-        *b[i].f_x = 0;
-        *b[i].f_y = 0;
+    for(i = 0 ; i < n; i++) {
+        b[i].f_x = (double *) malloc(p * sizeof(double));
+        b[i].f_y = (double *) malloc(p * sizeof(double));
+        memset(b[i].f_x, 0, sizeof(double) * p);
+        memset(b[i].f_y, 0, sizeof(double) * p);
     }
+    
     // compute fij for all i,j where i!=j
 	#pragma omp parallel for private(i,j)
     for(i = 0; i < n; i++) {
