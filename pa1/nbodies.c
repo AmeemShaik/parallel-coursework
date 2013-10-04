@@ -45,13 +45,15 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
-    b[i].f_x = (double *) malloc(omp_get_num_threads() * sizeof(double));
-    b[i].f_y = (double *) malloc(omp_get_num_threads() * sizeof(double));
+    int p = omp_get_num_threads();
+
+    b[i].f_x = (double *) malloc(p * sizeof(double));
+    b[i].f_y = (double *) malloc(p * sizeof(double));
 
     // reset forces to 0 since we'll accumulate
     for(i = 0 ; i < n; i++) {
-        b[i].f_x = {0};
-        b[i].f_y = {0};
+        b[i].f_x[p] = {0};
+        b[i].f_y[p] = {0};
     }
     // compute fij for all i<j ... and update f on i and f on j
 	
@@ -77,10 +79,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			b[i].f_x[omp_get_thread_num()] += fij_x;
-			b[i].f_y[omp_get_thread_num()] += fij_y;
-			b[j].f_x[omp_get_thread_num()] -= fij_x;
-			b[j].f_y[omp_get_thread_num()] -= fij_y;
+			b[i].f_x[pi] += fij_x;
+			b[i].f_y[pi] += fij_y;
+			b[j].f_x[pi] -= fij_x;
+			b[j].f_y[pi] -= fij_y;
 		}
 	}
 
