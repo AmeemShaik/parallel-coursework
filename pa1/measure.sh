@@ -12,6 +12,9 @@ P_VALUES=(1 2 4 8 16)
 BOLD_SEP="=============================================================================="
 THIN_SEP="------------------------------------------------------------------------------"
 
+echo "Compiling program..."
+make
+
 echo $SEP
 echo "Running simulations with parameters:"
 echo "  Number of bodies N=$NUM_BODIES"
@@ -23,5 +26,9 @@ for p in ${P_VALUES[*]}
 do
     export OMP_NUM_THREADS=$p
     echo "Using p=$OMP_NUM_THREADS threads:"
+
+    time ./nbodies_parallel $NUM_BODIES $TIMESTEP $STEPS
+    time ./nbodies_newton_parallel $NUM_BODIES $TIMESTEP $STEPS
+
     echo $THIN_SEP
 done
