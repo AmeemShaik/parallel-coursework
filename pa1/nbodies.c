@@ -71,13 +71,12 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			#pragma omp critical
-			{
-				b[i].f_x += fij_x;
-				b[i].f_y += fij_y;
-				b[j].f_x -= fij_x;
-				b[j].f_y -= fij_y;
-			}
+			b[i].f_x += fij_x;
+			b[i].f_y += fij_y;
+            #pragma omp atomic
+			b[j].f_x -= fij_x;
+            #pragma omp atomic
+			b[j].f_y -= fij_y;
 			
 		}
 
