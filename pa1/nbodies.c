@@ -57,6 +57,9 @@ void compute_forces() {
 	
 	//int ID = omp_get_thread_num();
 	#pragma omp parallel for private(i,j) shared(b)
+
+    unsigned short pi = omp_get_thread_num();
+
 	for(i = 0 ; i < n; i++) {
 		double fij_x, fij_y;
 		double result_i_x = 0,
