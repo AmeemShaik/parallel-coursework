@@ -66,7 +66,7 @@ void compute_forces() {
     // printf("initialized p=%d arrays for each body\n", p);
 
     unsigned short pi;
-    #pragma omp parallel for private(i,j, pi)
+    #pragma omp parallel for private(i,j, pi) schedule(static)
 	for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
@@ -108,7 +108,7 @@ void compute_forces() {
     }
 
     // compute fij for all i,j where i!=j
-	#pragma omp parallel for private(i,j)
+	#pragma omp parallel for private(i,j) schedule(static)
     for(i = 0; i < n; i++) {
         double result_x = 0;
         double result_y = 0;
