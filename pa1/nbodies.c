@@ -40,8 +40,13 @@ struct body
     double *f_y;
 };
 
-double **f_x;
-double **f_y;
+typedef struct
+{
+    double x;
+    double y;
+} force;
+
+force **f;
 
 struct body *b;
 
@@ -52,14 +57,11 @@ void compute_forces() {
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
-    f_x = (double **)malloc(sizeof(double*) * p);
-    f_y = (double **)malloc(sizeof(double*) * p);
+    f = (force **)malloc(sizeof(force*) * p);
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
-        f_x[i] = (double *) malloc(sizeof(double) * n);
-        f_y[i] = (double *) malloc(sizeof(double) * n);
-        memset(f_x[i], 0, sizeof(double) * n);
-        memset(f_y[i], 0, sizeof(double) * n);
+        f[i] = (force *) malloc(sizeof(force) * n);
+        memset(f[i], 0, sizeof(force) * n);
     }
     // printf("initialized p=%d arrays for each body\n", p);
 
@@ -84,10 +86,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			f_x[pi][i] += fij_x;
-			f_y[pi][i] += fij_y;
-			f_x[pi][j] -= fij_x;
-			f_y[pi][j] -= fij_y;
+			f[pi][i]->x += fij_x;
+			f[pi][i]->y += fij_y;
+			f[pi][j]->x -= fij_x;
+			f[pi][j]->y -= fij_y;
 		}
 	}
 
@@ -237,6 +239,7 @@ int main(int argc, char **argv) {
 
         int p = omp_get_max_threads();
 
+        #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
 
             int pi = omp_get_thread_num();
