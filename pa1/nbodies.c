@@ -35,8 +35,8 @@ struct body
     double r_y;    // Y component of position
     double v_x;    // X component of velocity
     double v_y;    // Y component of velocity
-    double f_x;
-    double f_y;
+    double *f_x;
+    double *f_y;
 };
 
 struct body *b;
@@ -45,10 +45,13 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
+    b[i].f_x = (double *) malloc(omp_get_num_threads() * sizeof(double));
+    b[i].f_y = (double *) malloc(omp_get_num_threads() * sizeof(double));
+
     // reset forces to 0 since we'll accumulate
     for(i = 0 ; i < n; i++) {
-        b[i].f_x = 0;
-        b[i].f_y = 0;
+        b[i].f_x = {0};
+        b[i].f_y = {0};
     }
     // compute fij for all i<j ... and update f on i and f on j
 	
@@ -71,23 +74,25 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			b[i].f_x += fij_x;
-			b[i].f_y += fij_y;
-			b[j].f_x -= fij_x;
-			b[j].f_y -= fij_y;
-			
+			b[i].f_x[omp_get_thread_num()] += fij_x;
+			b[i].f_y[omp_get_thread_num()] += fij_y;
+			b[j].f_x[omp_get_thread_num()] -= fij_x;
+			b[j].f_y[omp_get_thread_num()] -= fij_y;
 		}
-
-
 	}
+
 }
 #else
 void compute_forces() {
     unsigned short i, j;
     // reset forces to 0 since we'll accumulate
+
+    b[i].f_x = (double *) malloc(1 * sizeof(double));
+    b[i].f_y = (double *) malloc(1 * sizeof(double));
+
     for(i = 0; i < n; i++) {
-        b[i].f_x = 0;
-        b[i].f_y = 0;
+        *b[i].f_x = 0;
+        *b[i].f_y = 0;
     }
     // compute fij for all i,j where i!=j
 	#pragma omp parallel for private(i,j)
@@ -97,7 +102,7 @@ void compute_forces() {
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
-		for(j=0; j < i; j++) {
+		for(j=0; j < ; j++) {
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
 			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
@@ -116,8 +121,8 @@ void compute_forces() {
             result_y += constantVal*(r_yj - r_yi);
         }
 
-		b[i].f_x = result_x;
-		b[i].f_y = result_y;
+		*b[i].f_x = result_x;
+		*b[i].f_y = result_y;
     }
 }
 #endif
