@@ -3,7 +3,7 @@
  * Zach Cross (zcross@cs.unc.edu)
  * Ameem Shaik (shaik@cs.unc.edu)
  *
- *  n-bodies simulation (sequential)
+ *  n-bodies simulation (parallel)
  *      Usage: nbodies [number of bodies] [timestep] [number of steps to simulate]
  * compilation options:
  *      See Makefile. Executable names are self-explanatory.
@@ -25,7 +25,7 @@
 #define MASS_MAX 0.975
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
-#define ONE_BILLION 1000000000L
+
 unsigned short n, k;
 double timestep;
 
@@ -66,7 +66,7 @@ void compute_forces() {
     // printf("initialized p=%d arrays for each body\n", p);
 
     unsigned short pi;
-    #pragma omp parallel for private(i,j, pi) schedule(static)
+    #pragma omp parallel for private(i,j, pi)
 	for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
@@ -107,7 +107,7 @@ void compute_forces() {
     }
 
     // compute fij for all i,j where i!=j
-	#pragma omp parallel for private(i,j) schedule(static)
+	#pragma omp parallel for private(i,j)
     for(i = 0; i < n; i++) {
         double result_x = 0;
         double result_y = 0;
@@ -230,6 +230,9 @@ int main(int argc, char **argv) {
     #endif
 
     printf("Simulating...\n");
+
+    double startTime = omp_get_wtime();
+
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
@@ -268,6 +271,12 @@ int main(int argc, char **argv) {
             #endif
         }
     }
+
+    double endTime = omp_get_wtime();
+    printf("Simulation complete.\n");
+    printf("Wall time: %.4f seconds.\n", endTime - startTime);
+    printf("Interactions per second: %d\n", (int)(k*n*n)/(endTime - startTime));
+
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
     for(j=0; j < n; j++) {
