@@ -87,15 +87,14 @@ void compute_forces() {
 void compute_forces() {
     unsigned short i, j;
 
-    int p = omp_get_num_threads();
     // reset forces to 0 since we'll accumulate
     for(i = 0 ; i < n; i++) {
-        b[i].f_x = (double *) malloc(p * sizeof(double));
-        b[i].f_y = (double *) malloc(p * sizeof(double));
-        memset(b[i].f_x, 0, sizeof(double) * p);
-        memset(b[i].f_y, 0, sizeof(double) * p);
+        b[i].f_x = malloc(sizeof(double) * 1);
+        b[i].f_y = malloc(sizeof(double) * 1);
+        memset(b[i].f_x, 0, sizeof(double) * 1);
+        memset(b[i].f_y, 0, sizeof(double) * 1);
     }
-    
+
     // compute fij for all i,j where i!=j
 	#pragma omp parallel for private(i,j)
     for(i = 0; i < n; i++) {
@@ -119,12 +118,9 @@ void compute_forces() {
             double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
                 (r_xj - r_xi)*(r_xj - r_xi));
             double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-            result_x += constantVal*(r_xj - r_xi); 
-            result_y += constantVal*(r_yj - r_yi);
+            b[i].f_x[0] += constantVal*(r_xj - r_xi);
+            b[i].f_y[0] += constantVal*(r_yj - r_yi);
         }
-
-		*b[i].f_x = result_x;
-		*b[i].f_y = result_y;
     }
 }
 #endif
