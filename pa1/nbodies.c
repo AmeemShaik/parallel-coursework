@@ -66,7 +66,7 @@ void compute_forces() {
     // printf("initialized p=%d arrays for each body\n", p);
 
     unsigned short pi;
-    #pragma omp parallel for private(i,j, pi, b) schedule(static)
+    #pragma omp parallel for private(i,j, pi) schedule(static)
 	for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
@@ -119,8 +119,8 @@ void compute_forces() {
             double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
                 (r_xj - r_xi)*(r_xj - r_xi));
             double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-            b[i].f_x[0] += constantVal*(r_xj - r_xi);
-            b[i].f_y[0] += constantVal*(r_yj - r_yi);
+            b[i].f_x += constantVal*(r_xj - r_xi);
+            b[i].f_y += constantVal*(r_yj - r_yi);
 		}
         for(j=i+1; j < n; j++) {
             double r_yj = b[j].r_y;
