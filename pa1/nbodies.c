@@ -56,13 +56,13 @@ void compute_forces() {
         memset(b[i].f_y, 0, sizeof(double) * p);
     }
     
-    printf("initialized p=%d arrays for each body", p);
+    printf("initialized p=%d arrays for each body\n", p);
 
     unsigned short pi;
     #pragma omp parallel for private(i,j, pi)
 	for(i = 0 ; i < n; i++) {
 
-        printf("wtf survived iteration %d on processor %d", i, pi);
+        printf("wtf survived iteration %d on processor %d\n", i, pi);
 
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
