@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h> 
 #include <omp.h>
 
@@ -46,22 +47,17 @@ void compute_forces() {
     unsigned short i, j;
 
     int p = omp_get_num_threads();
-
-    b[i].f_x = (double *) malloc(p * sizeof(double));
-    b[i].f_y = (double *) malloc(p * sizeof(double));
-
     // reset forces to 0 since we'll accumulate
     for(i = 0 ; i < n; i++) {
-        b[i].f_x[p] = {0};
-        b[i].f_y[p] = {0};
+        b[i].f_x = (double *) malloc(p * sizeof(double));
+        b[i].f_y = (double *) malloc(p * sizeof(double));
+        memset(b[i].f_x, 0, sizeof(double) * p);
+        memset(b[i].f_y, 0, sizeof(double) * p);
     }
     // compute fij for all i<j ... and update f on i and f on j
-	
-	//int ID = omp_get_thread_num();
-	#pragma omp parallel for private(i,j) shared(b)
-
     unsigned short pi = omp_get_thread_num();
-
+    
+    #pragma omp parallel for private(i,j)
 	for(i = 0 ; i < n; i++) {
 		double fij_x, fij_y;
 		double result_i_x = 0,
