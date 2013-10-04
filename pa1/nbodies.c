@@ -76,6 +76,7 @@ void compute_forces() {
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
+
 		for(j=0; j < i; j++) {
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
@@ -86,10 +87,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			f[pi][i]->x += fij_x;
-			f[pi][i]->y += fij_y;
-			f[pi][j]->x -= fij_x;
-			f[pi][j]->y -= fij_y;
+			f[pi][i].x += fij_x;
+			f[pi][i].y += fij_y;
+			f[pi][j].x -= fij_x;
+			f[pi][j].y -= fij_y;
 		}
 	}
 
@@ -249,8 +250,8 @@ int main(int argc, char **argv) {
             #ifdef NEWTONSTHIRD
             // Reduce the force sum components in serial (p=small)
             for(j=0; j < p; j++) {
-                fx += f_x[j][i];
-                fy += f_y[j][i];
+                fx += f[j][i].x;
+                fy += f[j][i].y;
             }
 
             #else
