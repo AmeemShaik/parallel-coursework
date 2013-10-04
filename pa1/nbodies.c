@@ -40,6 +40,9 @@ struct body
     double *f_y;
 };
 
+double **f_x;
+double **f_y;
+
 struct body *b;
 
 #ifdef NEWTONSTHIRD
@@ -48,14 +51,15 @@ void compute_forces() {
 
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
+
+    f_x = (double **)malloc(sizeof(double*) * p);
     #pragma omp parallel for private(i)
-    for(i = 0 ; i < n; i++) {
-        b[i].f_x = (double *) malloc(p * sizeof(double));
-        b[i].f_y = (double *) malloc(p * sizeof(double));
-        memset(b[i].f_x, 0, sizeof(double) * p);
-        memset(b[i].f_y, 0, sizeof(double) * p);
+    for(i = 0; i < p; i++) {
+        f_x[i] = (double *) malloc(sizeof(double) * n);
+        f_y[i] = (double *) malloc(sizeof(double) * n);
+        memset(f_x[i], 0, sizeof(double) * n);
+        memset(f_y[i], 0, sizeof(double) * n);
     }
-    
     // printf("initialized p=%d arrays for each body\n", p);
 
     unsigned short pi;
@@ -79,10 +83,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			b[i].f_x[pi] += fij_x;
-			b[i].f_y[pi] += fij_y;
-			b[j].f_x[pi] -= fij_x;
-			b[j].f_y[pi] -= fij_y;
+			f_x[pi][i] += fij_x;
+			f_y[pi][i] += fij_y;
+			f_x[pi][j] -= fij_x;
+			f_y[pi][j] -= fij_y;
 		}
 	}
 
@@ -235,24 +239,24 @@ int main(int argc, char **argv) {
         #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
 
+            int pi = omp_get_thread_num();
+
             double fx, fy;
             fx = fy = 0;
             int j;
 
             #ifdef NEWTONSTHIRD
-                // Reduce the force sum components in serial (p=small)
-                for(j=0; j < p; j++) {
-                    fx += b[i].f_x[j];
-                    fy += b[i].f_y[j];
-                }
+            // Reduce the force sum components in serial (p=small)
+            for(j=0; j < p; j++) {
+                fx += f_x[j][i];
+                fy += f_y[j][i];
+            }
 
             #else
-
-                fx = b[i].f_x[0];
-                fy = b[i].f_y[0];
+            fx = b[i].f_x[0];
+            fy = b[i].f_y[0];
 
             #endif
-
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
             b[i].v_x += timestep * fx/b[i].m;
