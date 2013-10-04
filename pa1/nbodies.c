@@ -54,14 +54,14 @@ void compute_forces() {
         memset(b[i].f_x, 0, sizeof(double) * p);
         memset(b[i].f_y, 0, sizeof(double) * p);
     }
-    // compute fij for all i<j ... and update f on i and f on j
-    unsigned short pi = omp_get_thread_num();
     
     #pragma omp parallel for private(i,j)
 	for(i = 0 ; i < n; i++) {
+
+        // compute fij for all i<j ... and update f on i and f on j
+        unsigned short pi = omp_get_thread_num();
+        
 		double fij_x, fij_y;
-		double result_i_x = 0,
-			   result_i_y = 0;
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
