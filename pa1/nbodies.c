@@ -46,7 +46,7 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
-    int p = omp_get_num_threads();
+    int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
     #pragma omp parallel for private(i)
     for(i = 0 ; i < n; i++) {
@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
         // Compute forces on all bodies
         compute_forces();
 
-        int p = omp_get_num_threads();
+        int p = omp_get_max_threads();
 
         for(i = 0; i < n ; i++){
 
@@ -255,9 +255,6 @@ int main(int argc, char **argv) {
                 fy = b[i].f_y[0];
 
             #endif
-
-            
-            
 
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
