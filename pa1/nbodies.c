@@ -61,8 +61,6 @@ void compute_forces() {
     unsigned short pi;
     #pragma omp parallel for private(i,j, pi)
 	for(i = 0 ; i < n; i++) {
-
-
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
         // printf("wtf survived iteration %d on processor %d\n", i, pi);
@@ -94,6 +92,7 @@ void compute_forces() {
     unsigned short i, j;
 
     // reset forces to 0 since we'll accumulate
+    #pragma omp parallel for private(i)
     for(i = 0 ; i < n; i++) {
         b[i].f_x = malloc(sizeof(double) * 1);
         b[i].f_y = malloc(sizeof(double) * 1);
