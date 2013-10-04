@@ -105,7 +105,7 @@ void compute_forces() {
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
-		for(j=0; j < ; j++) {
+		for(j=0; j < i; j++) {
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
 			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
@@ -230,11 +230,28 @@ int main(int argc, char **argv) {
         // Compute forces on all bodies
         compute_forces();
 
+        int p = omp_get_num_threads();
+
         for(i = 0; i < n ; i++){
+
+            double fx, fy;
+            fx = fy = 0;
+
+            int j;
+            #pragma omp parallel for private(j) reduction(+:fx)
+            for(j=0; j < p; j++) {
+                fx = fx + b[i].f_x[j];
+            }
+
+            #pragma omp parallel for private(j) reduction(+:fy)
+            for(j=0; j < p; j++) {
+                fy = fy + b[i].f_y[j];
+            }
+
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
-            b[i].v_x += timestep * b[i].f_x/b[i].m;
-            b[i].v_y += timestep * b[i].f_y/b[i].m;
+            b[i].v_x += timestep * fx/b[i].m;
+            b[i].v_y += timestep * fy/b[i].m;
             #ifdef VERBOSE
             //printState(i);
             #endif
