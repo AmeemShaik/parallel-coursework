@@ -53,16 +53,13 @@ void compute_forces() {
     // compute fij for all i<j ... and update f on i and f on j
 	
 	//int ID = omp_get_thread_num();
-	//#pragma omp parallel for private(i,j)
+	#pragma omp parallel for private(i,j) shared(b)
 	for(i = 0 ; i < n; i++) {
-		int num = omp_get_thread_num();
-		printf("thread %i i is %i\n",num, i);
 		double fij_x, fij_y;
 		double result_i_x = 0,
 			   result_i_y = 0;
-		//trying to minimize array accesses
-		 double r_yi = b[i].r_y;
-		 double r_xi = b[i].r_x;
+		double r_yi = b[i].r_y;
+		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
 		for(j=0; j < i; j++) {
 			double r_yj = b[j].r_y;
@@ -74,13 +71,16 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			result_i_x += fij_x;
-			result_i_y += fij_y;
-			b[j].f_x -= fij_x;
-			b[j].f_y -= fij_y;
+			#pragma omp critical
+			{
+				b[i].f_x += fij_x;
+				b[i].f_y += fij_y;
+				b[j].f_x -= fij_x;
+				b[j].f_y -= fij_y;
+			}
+			
 		}
-		b[i].f_x = result_i_x;
-		b[i].f_y = result_i_y;
+
 
 	}
 }
