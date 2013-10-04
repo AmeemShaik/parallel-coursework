@@ -27,8 +27,10 @@ do
     export OMP_NUM_THREADS=$p
     echo "Using p=$OMP_NUM_THREADS threads:"
     echo "Parallel without newtons."
-    time ./nbodies $NUM_BODIES $TIMESTEP $STEPS
+    ./nbodies $NUM_BODIES $TIMESTEP $STEPS
+    echo
     echo "Parallel with newtons"
-    time ./nbodies_newton $NUM_BODIES $TIMESTEP $STEPS
+    ./nbodies_newton $NUM_BODIES $TIMESTEP $STEPS
+    echo
     echo $THIN_SEP
 done
