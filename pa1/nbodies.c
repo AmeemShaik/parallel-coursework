@@ -104,13 +104,13 @@ void compute_forces() {
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
 		for(j=0; j < i; j++) {
-			double r_yj = b[j].r_y;
-			double r_xj = b[j].r_x;
-			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
-				(r_xj - r_xi)*(r_xj - r_xi));
-			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-			result_x += constantVal*(r_xj - r_xi); 
-			result_y += constantVal*(r_yj - r_yi);
+            double r_yj = b[j].r_y;
+            double r_xj = b[j].r_x;
+            double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
+                (r_xj - r_xi)*(r_xj - r_xi));
+            double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
+            b[i].f_x[0] += constantVal*(r_xj - r_xi);
+            b[i].f_y[0] += constantVal*(r_yj - r_yi);
 		}
         for(j=i+1; j < n; j++) {
             double r_yj = b[j].r_y;
