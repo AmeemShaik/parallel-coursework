@@ -48,6 +48,7 @@ void compute_forces() {
 
     int p = omp_get_num_threads();
     // reset forces to 0 since we'll accumulate
+    #pragma omp parallel for private(i)
     for(i = 0 ; i < n; i++) {
         b[i].f_x = (double *) malloc(p * sizeof(double));
         b[i].f_y = (double *) malloc(p * sizeof(double));
@@ -55,12 +56,17 @@ void compute_forces() {
         memset(b[i].f_y, 0, sizeof(double) * p);
     }
     
-    #pragma omp parallel for private(i,j)
+    printf("initialized p=%d arrays for each body", p);
+
+    unsigned short pi;
+    #pragma omp parallel for private(i,j, pi)
 	for(i = 0 ; i < n; i++) {
 
+        printf("wtf survived iteration %d on processor %d", i, pi);
+
         // compute fij for all i<j ... and update f on i and f on j
-        unsigned short pi = omp_get_thread_num();
-        
+        pi = omp_get_thread_num();
+
 		double fij_x, fij_y;
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
