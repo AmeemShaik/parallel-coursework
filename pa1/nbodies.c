@@ -231,17 +231,27 @@ int main(int argc, char **argv) {
 
             double fx, fy;
             fx = fy = 0;
-
             int j;
-            #pragma omp parallel for private(j) reduction(+:fx)
-            for(j=0; j < p; j++) {
-                fx = fx + b[i].f_x[j];
-            }
 
-            #pragma omp parallel for private(j) reduction(+:fy)
-            for(j=0; j < p; j++) {
-                fy = fy + b[i].f_y[j];
-            }
+            #ifdef NEWTONSTHIRD
+                #pragma omp parallel for private(j) reduction(+:fx)
+                for(j=0; j < p; j++) {
+                    fx = fx + b[i].f_x[j];
+                }
+                #pragma omp parallel for private(j) reduction(+:fy)
+                for(j=0; j < p; j++) {
+                    fy = fy + b[i].f_y[j];
+                }
+
+            #else
+
+                fx = b[i].f_x[0];
+                fy = b[i].f_y[0];
+
+            #endif
+
+            
+            
 
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
