@@ -240,6 +240,7 @@ int main(int argc, char **argv) {
             int j;
 
             #ifdef NEWTONSTHIRD
+                // Reduce the force sum components in serial (p=small)
                 for(j=0; j < p; j++) {
                     fx += b[i].f_x[j];
                     fy += b[i].f_y[j];
