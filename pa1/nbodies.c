@@ -237,7 +237,6 @@ int main(int argc, char **argv) {
 
         int p = omp_get_max_threads();
 
-        #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
 
             int pi = omp_get_thread_num();
