@@ -48,9 +48,9 @@ typedef struct
     double y;
 } Force;
 
-Body *b;
-Velocity *v;
-Force **f;
+static Body *b;
+static Velocity *v;
+static Force **f;
 
 void compute_forces() {
     unsigned short i, j;
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     }
 
     b = (Body *) malloc( n * sizeof(Body));
-
+    v = (Velocity *) malloc( n * sizeof(Velocity));
 
     //Todo: parameterize timestep
     unsigned short t;
