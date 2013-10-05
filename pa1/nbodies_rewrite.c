@@ -31,7 +31,7 @@ double timestep;
 
 typedef struct
 {
-    double mass;
+    double m;
     double r_x;
     double r_y;
 } Body;
