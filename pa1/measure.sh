@@ -30,7 +30,7 @@ do
     ./nbodies $NUM_BODIES $TIMESTEP $STEPS
     echo
     echo "Parallel with newtons"
-    ./nbodies_newton $NUM_BODIES $TIMESTEP $STEPS
+    ./nbodies_rewrite $NUM_BODIES $TIMESTEP $STEPS
     echo
     echo $THIN_SEP
 done
