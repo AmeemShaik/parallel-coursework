@@ -3,7 +3,7 @@
  * Zach Cross (zcross@cs.unc.edu)
  * Ameem Shaik (shaik@cs.unc.edu)
  *
- *  n-bodies simulation (sequential)
+ *  n-bodies simulation (parallel)
  *      Usage: nbodies [number of bodies] [timestep] [number of steps to simulate]
  * compilation options:
  *      See Makefile. Executable names are self-explanatory.
@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h> 
 #include <omp.h>
 
@@ -24,8 +25,6 @@
 #define MASS_MAX 0.975
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
-#define ONE_BILLION 1000000000L
-#define NUM_THREADS = 4
 
 unsigned short n, k;
 double timestep;
@@ -41,28 +40,43 @@ struct body
     double f_y;
 };
 
+typedef struct
+{
+    double x;
+    double y;
+} force;
+
+force **f;
+
 struct body *b;
 
 #ifdef NEWTONSTHIRD
 void compute_forces() {
     unsigned short i, j;
 
+    int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
-    for(i = 0 ; i < n; i++) {
-        b[i].f_x = 0;
-        b[i].f_y = 0;
+
+    f = (force **)malloc(sizeof(force*) * p);
+    #pragma omp parallel for private(i)
+    for(i = 0; i < p; i++) {
+        f[i] = (force *) malloc(sizeof(force) * n);
+        memset(f[i], 0, sizeof(force) * n);
     }
-    // compute fij for all i<j ... and update f on i and f on j
-	
-	//int ID = omp_get_thread_num();
-	#pragma omp parallel for private(i,j)
+    // printf("initialized p=%d arrays for each body\n", p);
+
+    unsigned short pi;
+    #pragma omp parallel for private(i,j, pi)
 	for(i = 0 ; i < n; i++) {
+        // compute fij for all i<j ... and update f on i and f on j
+        pi = omp_get_thread_num();
+        // printf("wtf survived iteration %d on processor %d\n", i, pi);
+
 		double fij_x, fij_y;
-		double result_i_x = 0,
-			   result_i_y = 0;
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
+
 		for(j=0; j < i; j++) {
 			double r_yj = b[j].r_y;
 			double r_xj = b[j].r_x;
@@ -73,24 +87,25 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			#pragma omp critical
-			{
-				b[i].f_x += fij_x;
-				b[i].f_y += fij_y;
-				b[j].f_x -= fij_x;
-				b[j].f_y -= fij_y;
-			}	
+			f[pi][i].x += fij_x;
+			f[pi][i].y += fij_y;
+			f[pi][j].x -= fij_x;
+			f[pi][j].y -= fij_y;
 		}
 	}
+
 }
 #else
 void compute_forces() {
     unsigned short i, j;
+
     // reset forces to 0 since we'll accumulate
-    for(i = 0; i < n; i++) {
+    #pragma omp parallel for private(i)
+    for(i = 0 ; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
+
     // compute fij for all i,j where i!=j
 	#pragma omp parallel for private(i,j)
     for(i = 0; i < n; i++) {
@@ -99,21 +114,24 @@ void compute_forces() {
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
-		for(j=0; j < n; j++) {
-			//printf("j %i, threadNum %i\n",j,omp_get_thread_num());
-			double r_yj = b[j].r_y;
-			double r_xj = b[j].r_x;
-			double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
-				(r_xj - r_xi)*(r_xj - r_xi));
-			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-			if(i==j)
-				continue;
-			result_x += constantVal*(r_xj - r_xi); 
-			result_y += constantVal*(r_yj - r_yi);
+		for(j=0; j < i; j++) {
+            double r_yj = b[j].r_y;
+            double r_xj = b[j].r_x;
+            double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
+                (r_xj - r_xi)*(r_xj - r_xi));
+            double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
+            b[i].f_x += constantVal*(r_xj - r_xi);
+            b[i].f_y += constantVal*(r_yj - r_yi);
 		}
-
-		b[i].f_x = result_x;
-		b[i].f_y = result_y;
+        for(j=i+1; j < n; j++) {
+            double r_yj = b[j].r_y;
+            double r_xj = b[j].r_x;
+            double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
+                (r_xj - r_xi)*(r_xj - r_xi));
+            double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
+            b[i].f_x += constantVal*(r_xj - r_xi);
+            b[i].f_y += constantVal*(r_yj - r_yi);
+        }
     }
 }
 #endif
@@ -212,22 +230,53 @@ int main(int argc, char **argv) {
     #endif
 
     printf("Simulating...\n");
+
+    double startTime = omp_get_wtime();
+
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
         // Compute forces on all bodies
         compute_forces();
 
+        int p = omp_get_max_threads();
+
+        #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
+
+            int pi = omp_get_thread_num();
+
+            double fx, fy;
+            fx = fy = 0;
+            int j;
+
+            #ifdef NEWTONSTHIRD
+            // Reduce the force sum components in serial (p=small)
+            for(j=0; j < p; j++) {
+                fx += f[j][i].x;
+                fy += f[j][i].y;
+            }
+
+            #else
+            fx = b[i].f_x;
+            fy = b[i].f_y;
+
+            #endif
             b[i].r_x += timestep * b[i].v_x;
             b[i].r_y += timestep * b[i].v_y;
-            b[i].v_x += timestep * b[i].f_x/b[i].m;
-            b[i].v_y += timestep * b[i].f_y/b[i].m;
+            b[i].v_x += timestep * fx/b[i].m;
+            b[i].v_y += timestep * fy/b[i].m;
             #ifdef VERBOSE
             //printState(i);
             #endif
         }
     }
+
+    double endTime = omp_get_wtime();
+    printf("Simulation complete.\n");
+    printf("Wall time: %.4f seconds.\n", endTime - startTime);
+    printf("Interactions per second: %d\n", (int)((k*n*n)/(endTime - startTime)));
+
     //printf("Final states after %d steps:\n", k);
 	#ifdef PRINTMODE
     for(j=0; j < n; j++) {
