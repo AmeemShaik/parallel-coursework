@@ -32,14 +32,14 @@ double timestep;
 typedef struct
 {
     double m;
-    double r_x;
-    double r_y;
+    double x;
+    double y;
 } Body;
 
 typedef struct
 {
-    double v_x;
-    double v_y;
+    double x;
+    double y;
 } Velocity;
 
 typedef struct
@@ -58,11 +58,11 @@ void compute_forces() {
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
-    f = (force **)malloc(sizeof(force*) * p);
+    f = (Force **)malloc(sizeof(Force*) * p);
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
-        f[i] = (force *) malloc(sizeof(force) * n);
-        memset(f[i], 0, sizeof(force) * n);
+        f[i] = (Force *) malloc(sizeof(Force) * n);
+        memset(f[i], 0, sizeof(Force) * n);
     }
     // printf("initialized p=%d arrays for each body\n", p);
 
@@ -74,13 +74,13 @@ void compute_forces() {
         // printf("wtf survived iteration %d on processor %d\n", i, pi);
 
         double fij_x, fij_y;
-        double r_yi = b[i].r_y;
-        double r_xi = b[i].r_x;
+        double r_yi = b[i].y;
+        double r_xi = b[i].x;
         double iMass = b[i].m;
 
         for(j=0; j < i; j++) {
-            double r_yj = b[j].r_y;
-            double r_xj = b[j].r_x;
+            double r_yj = b[j].y;
+            double r_xj = b[j].x;
             //trying to exploit the fact that multiplication is faster than division
             double invDistance = 1/((r_yj - r_yi)*(r_yj - r_yi) +
                 (r_xj - r_xi)*(r_xj - r_xi));
@@ -99,20 +99,20 @@ void compute_forces() {
 
 void init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
     b[i].m = m;
-    b[i].r_x = ri0_x;
-    b[i].r_y = ri0_y;
-    b[i].v_x = vi0_x;
-    b[i].v_y = vi0_y;
+    b[i].x = ri0_x;
+    b[i].y = ri0_y;
+    v[i].x = vi0_x;
+    v[i].y = vi0_y;
 }
 
 void printState(unsigned short i) {
     printf("[body %d] m(%f) r(%f, %f) v(%f, %f)\n",
         i,
         b[i].m,
-        b[i].r_x,
-        b[i].r_y,
-        b[i].v_x,
-        b[i].v_y
+        b[i].x,
+        b[i].y,
+        v[i].x,
+        v[i].y
     );
 }
 int main(int argc, char **argv) {
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    b = (struct body *) malloc( n * sizeof(struct body));
+    b = (Body *) malloc( n * sizeof(Body));
 
 
     //Todo: parameterize timestep
@@ -218,10 +218,10 @@ int main(int argc, char **argv) {
                 fy += f[j][i].y;
             }
 
-            b[i].r_x += timestep * b[i].v_x;
-            b[i].r_y += timestep * b[i].v_y;
-            b[i].v_x += timestep * fx/b[i].m;
-            b[i].v_y += timestep * fy/b[i].m;
+            b[i].x += timestep * v[i].x;
+            b[i].y += timestep * v[i].y;
+            v[i].x += timestep * fx/b[i].m;
+            v[i].y += timestep * fy/b[i].m;
             #ifdef VERBOSE
             //printState(i);
             #endif
