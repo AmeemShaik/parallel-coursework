@@ -84,10 +84,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			f[pi+p*i].x += fij_x;
-			f[pi+p*i].y += fij_y;
-			f[pi+p*j].x -= fij_x;
-			f[pi+p*j].y -= fij_y;
+			f[p+pi*i].x += fij_x;
+			f[p+pi*i].y += fij_y;
+			f[p+pi*j].x -= fij_x;
+			f[p+pi*j].y -= fij_y;
 		}
 	}
 
@@ -253,8 +253,8 @@ int main(int argc, char **argv) {
             int pi = omp_get_thread_num();
             // Reduce the force sum components in serial (p=small)
             for(j=0; j < p; j++) {
-                fx += f[j+p*i].x;
-                fy += f[j+p*i].y;
+                fx += f[i+p*j].x;
+                fy += f[i+p*j].y;
             }
 
             #else
