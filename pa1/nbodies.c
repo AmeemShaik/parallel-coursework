@@ -70,8 +70,8 @@ void compute_forces() {
 				(r_xj - r_xi)*(r_xj - r_xi));
 			//this is a constant value that is same for fx and fy. Can reuse it
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-			f[i][j].x = constantVal*(r_xj - r_xi);
-			f[i][j].y = constantVal*(r_yj - r_yi);
+			f[i*n+j].x = constantVal*(r_xj - r_xi);
+			f[i*n+j].y = constantVal*(r_yj - r_yi);
 		}
 	}
 
@@ -217,17 +217,9 @@ int main(int argc, char **argv) {
 
     #ifdef NEWTONSTHIRD
 
-    // Allocate n*n array
+    // Allocate n*n array of forces
     int p = omp_get_max_threads();
-    f = (force **)malloc(sizeof(force*) * n);
-
-    // Allocate each inner array
-    int i;
-    #pragma omp parallel for
-    for(i = 0; i < n; i++) {
-        f[i] = (force *) malloc(sizeof(force) * n);
-    }
-    #endif
+    f = (force *)malloc(sizeof(force) * n * n);
 
     // Integrate k steps
     for(t=1; t <= k; t++) {
@@ -250,13 +242,13 @@ int main(int argc, char **argv) {
             #ifdef NEWTONSTHIRD
             // Reduce the force sum components in serial (p=small)
             for(j=0; j < i; j++) {
-                fx += f[i][j].x;
-                fy += f[i][j].y;
+                fx += f[i*n+j].x;
+                fy += f[i*n+j].y;
             }
 
             for(j=i+1; j < n; j++) {
-                fx += f[i][j].x;
-                fy += f[i][j].y;
+                fx += f[i*n+j].x;
+                fy += f[i*n+j].y;
             }
 
             #else
