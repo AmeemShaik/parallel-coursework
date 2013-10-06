@@ -59,10 +59,13 @@ void compute_forces() {
 
     unsigned short pi;
 
-    #pragma omp parallel private(pi) shared(f)
+    #pragma omp parallel private(pi, j)
     {
         pi = omp_get_thread_num();
-        memset(f[pi], 0, sizeof(force) * n);
+        for(j=0; j<n; j++){
+            f[pi][j].x = 0;
+            f[pi][j].y = 0;
+        }
     }
     // printf("initialized p=%d arrays for each body\n", p);
 
