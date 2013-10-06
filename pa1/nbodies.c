@@ -26,8 +26,8 @@
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
 
-unsigned short n, k;
-double timestep;
+static unsigned short n, k, p;
+static double timestep;
 
 struct body
 {
@@ -46,7 +46,7 @@ typedef struct
     double y;
 } force;
 
-force **f;
+force *f;
 
 struct body *b;
 
@@ -54,14 +54,11 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
-    int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
-
-    f = (force **)malloc(sizeof(force*) * p);
-    #pragma omp parallel for private(i)
-    for(i = 0; i < p; i++) {
-        f[i] = (force *) malloc(sizeof(force) * n);
-        memset(f[i], 0, sizeof(force) * n);
+    #pragma omp parallel for
+    for(i=0; i < p*n; i++) {
+        f[i].x = 0;
+        f[i].y = 0;
     }
     // printf("initialized p=%d arrays for each body\n", p);
 
@@ -87,10 +84,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			f[pi][i].x += fij_x;
-			f[pi][i].y += fij_y;
-			f[pi][j].x -= fij_x;
-			f[pi][j].y -= fij_y;
+			f[pi+p*i].x += fij_x;
+			f[pi+p*i].y += fij_y;
+			f[pi+p*j].x -= fij_x;
+			f[pi+p*j].y -= fij_y;
 		}
 	}
 
@@ -164,6 +161,7 @@ int main(int argc, char **argv) {
     n = atoi(argv[1]);
     timestep = strtod(argv[2], NULL);
     k = atoi(argv[3]);
+    p = omp_get_max_threads();
 
     printf("Received parameters:\n\t# Bodies: %d\n\tTime Step: %f\n\t# Steps:%d\n",
            n, timestep, k);
@@ -233,28 +231,30 @@ int main(int argc, char **argv) {
 
     double startTime = omp_get_wtime();
 
+    #ifdef NEWTONSTHIRD
+    f = (force *) malloc(sizeof(force) * p * n);
+    #endif
+
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
         // Compute forces on all bodies
         compute_forces();
 
-        int p = omp_get_max_threads();
-
         #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
-
-            int pi = omp_get_thread_num();
 
             double fx, fy;
             fx = fy = 0;
             int j;
 
             #ifdef NEWTONSTHIRD
+
+            int pi = omp_get_thread_num();
             // Reduce the force sum components in serial (p=small)
             for(j=0; j < p; j++) {
-                fx += f[j][i].x;
-                fy += f[j][i].y;
+                fx += f[j+p*i].x;
+                fy += f[j+p*i].y;
             }
 
             #else
