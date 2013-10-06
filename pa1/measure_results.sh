@@ -16,7 +16,7 @@ touch results.csv
 echo "Running simulations with varying (n, p, k):" >> results.csv
 echo "  Time step size t=$TIMESTEP" >> results.csv
 
-echo "n, p, k, newtons, walltime"
+echo "n, p, k, newtons, walltime" >> results.csv
 for p in ${P_VALUES[*]}
 do
     for n in ${N_VALUES[*]}
