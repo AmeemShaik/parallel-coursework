@@ -250,8 +250,6 @@ int main(int argc, char **argv) {
         #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
 
-            int pi = omp_get_thread_num();
-
             double fx, fy;
             fx = fy = 0;
             int j;
