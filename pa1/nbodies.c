@@ -56,13 +56,8 @@ void compute_forces() {
 
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
-
-    if (f == NULL) {
-        f = (force **)malloc(sizeof(force*) * p);   
-    }
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
-        f[i] = (force *) malloc(sizeof(force) * n);
         memset(f[i], 0, sizeof(force) * n);
     }
     // printf("initialized p=%d arrays for each body\n", p);
@@ -235,10 +230,20 @@ int main(int argc, char **argv) {
 
     double startTime = omp_get_wtime();
 
+    #ifdef NEWTONSTHIRD
+    // Allocate n*p array
+    int p = omp_get_max_threads();
+    f = (force **)malloc(sizeof(force*) * p);
+    #pragma omp parallel for private(i)
+    for(i = 0; i < p; i++) {
+        f[i] = (force *) malloc(sizeof(force) * n);
+    #endif
+
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
         // Compute forces on all bodies
+
         compute_forces();
 
         int p = omp_get_max_threads();
