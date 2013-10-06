@@ -58,7 +58,7 @@ void compute_forces() {
    
     // printf("initialized p=%d arrays for each body\n", p);
 
-    #pragma omp parallel for private(j, pi)
+    #pragma omp parallel for private(j, pi) schedule(dynamic)
     for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
