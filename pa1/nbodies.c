@@ -62,6 +62,7 @@ void compute_forces() {
     #pragma omp parallel private(pi, j)
     {
         pi = omp_get_thread_num();
+        printf("beep boop zeroing out array for thread %hu\n", pi);
         for(j=0; j<n; j++){
             f[pi][j].x = 0;
             f[pi][j].y = 0;
