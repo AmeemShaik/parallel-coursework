@@ -244,6 +244,7 @@ int main(int argc, char **argv) {
     for(i = 0; i < p; i++) {
         pi = omp_get_thread_num();
         f[i] = (force *) malloc(sizeof(force) * n);
+        printf("beep boop malloced array for thread %hu\n", pi);
     }
 
     #endif
