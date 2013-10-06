@@ -55,14 +55,10 @@ void compute_forces() {
     unsigned short i, j,pi;
     // reset forces to 0 since we'll accumulate 
 
-   
-    // printf("initialized p=%d arrays for each body\n", p);
-
     #pragma omp parallel for private(j, pi) schedule(dynamic)
     for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
-        // printf("wtf survived iteration %d on processor %d\n", i, pi);
         double fij_x, fij_y;
         double r_yi = b[i].r_y;
         double r_xi = b[i].r_x;
@@ -159,8 +155,10 @@ int main(int argc, char **argv) {
 
     unsigned short pi, j;
 
+    #ifdef PRINTMODE
     printf("Received parameters:\n\t# Bodies: %d\n\tTime Step: %f\n\t# Steps:%d\n",
            n, timestep, k);
+    #endif
 
     if (n <= 0 || k <= 0 || timestep <= 0) {
         printf("Expected non-zero values for n, ∆t, and k.\n");
@@ -233,9 +231,8 @@ int main(int argc, char **argv) {
     printf("Initial states:\n");
     for(j=0; j<n; j++)
         printState(j);
-    #endif
-
     printf("Simulating...\n");
+    #endif
 
     double startTime = omp_get_wtime();
 
@@ -279,16 +276,19 @@ int main(int argc, char **argv) {
     }
 
     double endTime = omp_get_wtime();
-    // printf("Simulation complete.\n");
-    // printf("Wall time: %.4f seconds.\n", endTime - startTime);
-     // (n, p, k, newtons{0,1}, walltime)
+    #ifdef PRINTMODE
+    printf("Simulation complete.\n");
+    printf("Wall time: %.4f seconds.\n", endTime - startTime);
+    #endif
+
     int newtons;
     #ifdef NEWTONSTHIRD
         newtons = 1;
     #else
         newtons = 0;
     #endif
-        
+
+     // (n, p, k, newtons{0,1}, walltime) for csv results
     printf("%d, %d, %d, %d, %f\n", n, p, k, newtons, endTime - startTime);
 
     //printf("Final states after %d steps:\n", k);
