@@ -1,12 +1,15 @@
 /* 
- * COMP633 - Programming Assignment 1(a)
+ * COMP633 - Programming Assignment 1(b)
  * Zach Cross (zcross@cs.unc.edu)
  * Ameem Shaik (shaik@cs.unc.edu)
  *
- *  n-bodies simulation (parallel)
+ * n-bodies simulation (parallel)
  *      Usage: nbodies [number of bodies] [timestep] [number of steps to simulate]
  * compilation options:
  *      See Makefile. Executable names are self-explanatory.
+ *      Most critical option is compile-time definition (or lackthereof)
+ *          of NEWTONSTHIRD, which enables the optimization based on 
+ *          Newton's third law.
  */
 
 #include <math.h>
@@ -26,10 +29,7 @@
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
 
-static unsigned short n, k, p;
-static double timestep;
-
-struct body
+typedef struct
 {
     double m;      // Mass
     double r_x;    // X component of position
@@ -38,7 +38,7 @@ struct body
     double v_y;    // Y component of velocity
     double f_x;
     double f_y;
-};
+} body;
 
 typedef struct
 {
@@ -46,10 +46,17 @@ typedef struct
     double y;
 } force;
 
-force **f;
+static unsigned short n, k, p;
+static double timestep;
+static force **f;
+static body *b;
 
-struct body *b;
-
+/*
+ * compute_forces() with Newton's third law optimization:
+ * Each thread gets an array of size n.
+ * Each thread builds up a partial sum of fi = sum(fij) with i<j
+ * Results are stored in f[thread][i] and available for reduction (see main).
+ */
 #ifdef NEWTONSTHIRD
 void compute_forces() {
     unsigned short i, j,pi;
@@ -80,8 +87,12 @@ void compute_forces() {
             f[pi][j].y -= fij_y;
         }
     }
-
 }
+
+/*
+ * compute_forces() without Newton's third law optimization.
+ * Computes all pairs and accumulates fi = sum(fij) for all j!=i
+ */
 #else
 void compute_forces() {
     unsigned short i, j;
@@ -123,6 +134,9 @@ void compute_forces() {
 }
 #endif
 
+/*
+ * Initialize the array of bodies.
+ */
 void init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, double vi0_y) {
     b[i].m = m;
     b[i].r_x = ri0_x;
@@ -131,6 +145,9 @@ void init(unsigned short i, double m, double ri0_x, double ri0_y, double vi0_x, 
     b[i].v_y = vi0_y;
 }
 
+/*
+ * Debugging method: print state of bodies.
+ */
 void printState(unsigned short i) {
     printf("[body %d] m(%f) r(%f, %f) v(%f, %f)\n",
         i,
@@ -141,6 +158,11 @@ void printState(unsigned short i) {
         b[i].v_y
     );
 }
+
+/*
+ * Main: get arguments, allocate necessary memory, integrate.
+ * Times the main integration loop.
+ */
 int main(int argc, char **argv) {
 
     if (argc != 4) {
@@ -153,7 +175,7 @@ int main(int argc, char **argv) {
     k = atoi(argv[3]);
     p = omp_get_max_threads();
 
-    unsigned short pi, j;
+    unsigned short pi, i, j, t;
 
     #ifdef PRINTMODE
     printf("Received parameters:\n\t# Bodies: %d\n\tTime Step: %f\n\t# Steps:%d\n",
@@ -165,12 +187,11 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    b = (struct body *) malloc( n * sizeof(struct body));
+    b = (body *) malloc( n * sizeof(body));
 
     #ifdef NEWTONSTHIRD
 
     f = (force **)malloc(sizeof(force*) * p);
-    unsigned short i;
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
         f[i] = (force *) malloc(sizeof(force) * n);
@@ -187,9 +208,6 @@ int main(int argc, char **argv) {
     
     #endif
 
-    //Todo: parameterize timestep
-    unsigned short t;
-	
     // Initialize bodies
     #pragma omp parallel for private(j)
     for(j=0; j < n; j++) {
