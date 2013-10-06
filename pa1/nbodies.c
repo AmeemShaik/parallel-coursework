@@ -96,13 +96,6 @@ void compute_forces() {
 #else
 void compute_forces() {
     unsigned short i, j;
-	
-    // reset forces to 0 since we'll accumulate
-    #pragma omp parallel for private(i)
-    for(i = 0 ; i < n; i++) {
-        b[i].f_x = 0;
-        b[i].f_y = 0;
-    }
 
     // compute fij for all i,j where i!=j
     #pragma omp parallel for private(i,j) 
@@ -205,7 +198,15 @@ int main(int argc, char **argv) {
             f[pi][j].y = 0;
         }
     }
-    
+    #else
+
+    // reset forces to 0 since we'll accumulate
+    #pragma omp parallel for private(i)
+    for(i = 0 ; i < n; i++) {
+        b[i].f_x = 0;
+        b[i].f_y = 0;
+    }
+
     #endif
 
     // Initialize bodies
@@ -279,8 +280,11 @@ int main(int argc, char **argv) {
             }
 
             #else
+
             fx = b[i].f_x;
+            b[i].f_x = 0;
             fy = b[i].f_y;
+            b[i].f_y = 0;
 
             #endif
             b[i].r_x += timestep * b[i].v_x;
