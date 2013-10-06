@@ -10,7 +10,7 @@ N_VALUES=(100 200 500 1000 2000 5000 10000)
 echo "Running simulations with varying (n, p, k):"
 echo "  Time step size t=$TIMESTEP"
 
-echo "n, p, k, newtons, walltime\n"
+echo "n, p, k, newtons, walltime"
 for p in ${P_VALUES[*]}
 do
     for n in ${N_VALUES[*]}
