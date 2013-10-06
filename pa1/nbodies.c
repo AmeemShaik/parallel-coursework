@@ -46,7 +46,7 @@ typedef struct
     double y;
 } force;
 
-force **f;
+force *f;
 
 struct body *b;
 
@@ -216,10 +216,10 @@ int main(int argc, char **argv) {
     double startTime = omp_get_wtime();
 
     #ifdef NEWTONSTHIRD
-
     // Allocate n*n array of forces
     int p = omp_get_max_threads();
     f = (force *)malloc(sizeof(force) * n * n);
+    #endif
 
     // Integrate k steps
     for(t=1; t <= k; t++) {
