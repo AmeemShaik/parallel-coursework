@@ -98,7 +98,7 @@ void compute_forces() {
     }
 
     // compute fij for all i,j where i!=j
-    #pragma omp parallel for private(i,j)
+    #pragma omp parallel for private(i,j) schedule(dynamic)
     for(i = 0; i < n; i++) {
         double result_x = 0;
         double result_y = 0;
