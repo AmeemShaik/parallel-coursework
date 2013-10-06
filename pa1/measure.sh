@@ -7,7 +7,7 @@ DEFAULT_STEPS=4
 NUM_BODIES=${1:-$DEFAULT_NUM_BODIES}
 TIMESTEP=${2:-$DEFAULT_TIMESTEP}
 STEPS=${3:-$DEFAULT_STEPS}
-P_VALUES=(1 2 4 8 10 12 14 15 16)
+P_VALUES=(1 2 4 8 16)
 
 BOLD_SEP="=============================================================================="
 THIN_SEP="------------------------------------------------------------------------------"
