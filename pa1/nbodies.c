@@ -54,7 +54,7 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
-    int p = omp_get_max_threads();
+    unsigned short p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
     unsigned short pi;
