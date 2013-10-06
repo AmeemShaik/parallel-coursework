@@ -54,23 +54,19 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
-    unsigned short p = omp_get_max_threads();
+    int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
     unsigned short pi;
 
     #pragma omp parallel private(pi) shared(f)
-        {
-            pi = omp_get_thread_num();
-            printf("bout to reset f[pi] to zero for pi=%d\n", pi);
-            memset(f[pi], 0, sizeof(force) * n);
-            printf("wtf\n");
-        }
-
-    printf("done wiping out arrays\n");
+    {
+        pi = omp_get_thread_num();
+        memset(f[pi], 0, sizeof(force) * n);
+    }
     // printf("initialized p=%d arrays for each body\n", p);
 
-    #pragma omp parallel for private(j, pi) shared(f)
+    #pragma omp parallel for private(i,j, pi)
     for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
@@ -241,15 +237,11 @@ int main(int argc, char **argv) {
 
     f = (force **)malloc(sizeof(force*) * p);
     unsigned short i, pi;
+    for(i = 0; i < p; i++) {
+        pi = omp_get_thread_num();
+        f[i] = (force *) malloc(sizeof(force) * n);
+    }
 
-    printf("here i am\n");
-    #pragma omp parallel private(pi) shared(f)
-        {
-            printf("hello from thread %d\n", pi);
-            pi = omp_get_thread_num();
-            f[pi] = (force *) malloc(sizeof(force) * n);
-        }
-    printf("finished with that stuff\n");
     #endif
 
     // Integrate k steps
