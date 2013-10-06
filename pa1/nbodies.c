@@ -255,8 +255,6 @@ int main(int argc, char **argv) {
         // Compute forces on all bodies
         compute_forces();
 
-        int p = omp_get_max_threads();
-
         #pragma omp parallel for private(i)
         for(i = 0; i < n ; i++){
 
