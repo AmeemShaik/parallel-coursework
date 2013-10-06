@@ -157,6 +157,8 @@ int main(int argc, char **argv) {
     k = atoi(argv[3]);
     p = omp_get_max_threads();
 
+    unsigned short pi, j;
+
     printf("Received parameters:\n\t# Bodies: %d\n\tTime Step: %f\n\t# Steps:%d\n",
            n, timestep, k);
 
@@ -167,11 +169,30 @@ int main(int argc, char **argv) {
 
     b = (struct body *) malloc( n * sizeof(struct body));
 
+    #ifdef NEWTONSTHIRD
+
+    f = (force **)malloc(sizeof(force*) * p);
+    unsigned short i;
+    #pragma omp parallel for private(i)
+    for(i = 0; i < p; i++) {
+        f[i] = (force *) malloc(sizeof(force) * n);
+    }
+
+    #pragma omp parallel private(pi, j)
+    {
+        pi = omp_get_thread_num();
+        for(j=0; j<n; j++){
+            f[pi][j].x = 0;
+            f[pi][j].y = 0;
+        }
+    }
+    
+    #endif
+
     //Todo: parameterize timestep
     unsigned short t;
 	
     // Initialize bodies
-    unsigned short j;
     #pragma omp parallel for private(j)
     for(j=0; j < n; j++) {
 
@@ -217,27 +238,8 @@ int main(int argc, char **argv) {
     printf("Simulating...\n");
 
     double startTime = omp_get_wtime();
-	unsigned short pi;
 
-    #ifdef NEWTONSTHIRD
-
-    f = (force **)malloc(sizeof(force*) * p);
-    unsigned short i;
-	#pragma omp parallel for private(i)
-    for(i = 0; i < p; i++) {
-        f[i] = (force *) malloc(sizeof(force) * n);
-    }
-
-	#pragma omp parallel private(pi, j)
-    {
-        pi = omp_get_thread_num();
-        for(j=0; j<n; j++){
-            f[pi][j].x = 0;
-            f[pi][j].y = 0;
-        }
-    }
-	
-    #endif
+   
 	
     // Integrate k steps
     for(t=1; t <= k; t++) {
