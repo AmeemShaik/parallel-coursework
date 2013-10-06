@@ -62,9 +62,12 @@ void compute_forces() {
     #pragma omp parallel private(pi)
     {
         pi = omp_get_thread_num();
+        printf("bout to reset f[pi] to zero for pi=%d\n", pi);
         memset(f[pi], 0, sizeof(force) * n);
         printf("wtf\n");
     }
+
+    printf("done wiping out arrays\n");
     // printf("initialized p=%d arrays for each body\n", p);
 
     #pragma omp parallel for private(j, pi)
@@ -246,7 +249,7 @@ int main(int argc, char **argv) {
         pi = omp_get_thread_num();
         f[pi] = (force *) malloc(sizeof(force) * n);
     }
-
+    printf("finished with that stuff\n");
     #endif
 
     // Integrate k steps
