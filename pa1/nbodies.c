@@ -184,6 +184,7 @@ int main(int argc, char **argv) {
 	double testry[] = {0.755605,0.678865};
 	double testvx[] = {-0.649317, -0.495775};
 	double testvy[] = {-0.478834, -0.798279};
+
 	#pragma omp parallel for private(j)
     for(j=0; j < n; j++) {
 
@@ -231,12 +232,17 @@ int main(int argc, char **argv) {
     double startTime = omp_get_wtime();
 
     #ifdef NEWTONSTHIRD
+
     // Allocate n*p array
     int p = omp_get_max_threads();
     f = (force **)malloc(sizeof(force*) * p);
+
+    // Allocate each inner array
+    int i;
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
         f[i] = (force *) malloc(sizeof(force) * n);
+    }
     #endif
 
     // Integrate k steps
