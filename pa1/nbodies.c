@@ -70,8 +70,8 @@ void compute_forces() {
 				(r_xj - r_xi)*(r_xj - r_xi));
 			//this is a constant value that is same for fx and fy. Can reuse it
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-			fij.x = constantVal*(r_xj - r_xi);
-			fij.y = constantVal*(r_yj - r_yi);
+			f[i][j].x = constantVal*(r_xj - r_xi);
+			f[i][j].y = constantVal*(r_yj - r_yi);
 		}
 	}
 
