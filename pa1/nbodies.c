@@ -53,8 +53,6 @@ struct body *b;
 #ifdef NEWTONSTHIRD
 void compute_forces() {
     unsigned short i, j;
-
-    p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
     unsigned short pi;
@@ -68,6 +66,7 @@ void compute_forces() {
             f[pi][j].y = 0;
         }
     }
+    printf("done zeroing\n");
     // printf("initialized p=%d arrays for each body\n", p);
 
     #pragma omp parallel for private(i,j, pi)
@@ -168,6 +167,7 @@ int main(int argc, char **argv) {
     n = atoi(argv[1]);
     timestep = strtod(argv[2], NULL);
     k = atoi(argv[3]);
+    p = omp_get_max_threads();
 
     printf("Received parameters:\n\t# Bodies: %d\n\tTime Step: %f\n\t# Steps:%d\n",
            n, timestep, k);
