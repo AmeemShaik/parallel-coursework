@@ -57,17 +57,14 @@ void compute_forces() {
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
     #pragma omp parallel for private(i)
-    for(i = 0; i < p; i++) {
+    for(i = 0; i < n; i++) {
         memset(f[i], 0, sizeof(force) * n);
     }
-    // printf("initialized p=%d arrays for each body\n", p);
 
     unsigned short pi;
     #pragma omp parallel for private(i,j, pi)
 	for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
-        pi = omp_get_thread_num();
-        // printf("wtf survived iteration %d on processor %d\n", i, pi);
 
 		double fij_x, fij_y;
 		double r_yi = b[i].r_y;
@@ -84,10 +81,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			f[pi][i].x += fij_x;
-			f[pi][i].y += fij_y;
-			f[pi][j].x -= fij_x;
-			f[pi][j].y -= fij_y;
+			f[i][j].x += fij_x;
+			f[i][j].y += fij_y;
+			f[j][i].x -= fij_x;
+			f[j][i].y -= fij_y;
 		}
 	}
 
@@ -233,14 +230,14 @@ int main(int argc, char **argv) {
 
     #ifdef NEWTONSTHIRD
 
-    // Allocate n*p array
+    // Allocate n*n array
     int p = omp_get_max_threads();
-    f = (force **)malloc(sizeof(force*) * p);
+    f = (force **)malloc(sizeof(force*) * n);
 
     // Allocate each inner array
     int i;
     #pragma omp parallel for private(i)
-    for(i = 0; i < p; i++) {
+    for(i = 0; i < n; i++) {
         f[i] = (force *) malloc(sizeof(force) * n);
     }
     #endif
@@ -265,9 +262,9 @@ int main(int argc, char **argv) {
 
             #ifdef NEWTONSTHIRD
             // Reduce the force sum components in serial (p=small)
-            for(j=0; j < p; j++) {
-                fx += f[j][i].x;
-                fy += f[j][i].y;
+            for(j=0; j < n; j++) {
+                fx += f[i][j].x;
+                fy += f[i][j].y;
             }
 
             #else
