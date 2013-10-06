@@ -26,8 +26,8 @@
 #define INIT_V_MIN -1.0
 #define INIT_V_MAX 1.0
 
-unsigned short n, k;
-double timestep;
+static unsigned short n, k, p;
+static double timestep;
 
 struct body
 {
@@ -57,15 +57,15 @@ void compute_forces() {
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
-    f = (force **)malloc(sizeof(force*) * p);
-    #pragma omp parallel for private(i)
-    for(i = 0; i < p; i++) {
-        f[i] = (force *) malloc(sizeof(force) * n);
-        memset(f[i], 0, sizeof(force) * n);
+    unsigned short pi;
+
+    #pragma omp parallel private(pi)
+    {
+        pi = omp_get_thread_num();
+        memset(f[pi], 0, sizeof(force) * n);
     }
     // printf("initialized p=%d arrays for each body\n", p);
 
-    unsigned short pi;
     #pragma omp parallel for private(i,j, pi)
     for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
@@ -232,6 +232,18 @@ int main(int argc, char **argv) {
     printf("Simulating...\n");
 
     double startTime = omp_get_wtime();
+
+    #ifdef NEWTONSTHIRD
+
+    f = (force **)malloc(sizeof(force*) * p);
+    unsigned short i, pi;
+    #pragma omp parallel private(pi)
+    {
+        pi = omp_get_thread_num();
+        f[pi] = (force *) malloc(sizeof(force) * n);
+    }
+
+    #endif
 
     // Integrate k steps
     for(t=1; t <= k; t++) {
