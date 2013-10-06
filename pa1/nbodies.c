@@ -56,13 +56,13 @@ void compute_forces() {
 
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
-    #pragma omp parallel for private(i)
+    #pragma omp parallel for
     for(i = 0; i < n; i++) {
         memset(f[i], 0, sizeof(force) * n);
     }
 
     unsigned short pi;
-    #pragma omp parallel for private(i,j, pi)
+    #pragma omp parallel for private(j, pi)
 	for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
 
@@ -94,14 +94,14 @@ void compute_forces() {
     unsigned short i, j;
 
     // reset forces to 0 since we'll accumulate
-    #pragma omp parallel for private(i)
+    #pragma omp parallel for
     for(i = 0 ; i < n; i++) {
         b[i].f_x = 0;
         b[i].f_y = 0;
     }
 
     // compute fij for all i,j where i!=j
-	#pragma omp parallel for private(i,j)
+	#pragma omp parallel for private(j)
     for(i = 0; i < n; i++) {
         double result_x = 0;
         double result_y = 0;
@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 
     // Allocate each inner array
     int i;
-    #pragma omp parallel for private(i)
+    #pragma omp parallel for
     for(i = 0; i < n; i++) {
         f[i] = (force *) malloc(sizeof(force) * n);
     }
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
 
         int p = omp_get_max_threads();
 
-        #pragma omp parallel for private(i)
+        #pragma omp parallel for
         for(i = 0; i < n ; i++){
 
             int pi = omp_get_thread_num();
