@@ -59,18 +59,18 @@ void compute_forces() {
 
     unsigned short pi;
 
-    #pragma omp parallel private(pi)
-    {
-        pi = omp_get_thread_num();
-        printf("bout to reset f[pi] to zero for pi=%d\n", pi);
-        memset(f[pi], 0, sizeof(force) * n);
-        printf("wtf\n");
-    }
+    #pragma omp parallel private(pi) shared(f)
+        {
+            pi = omp_get_thread_num();
+            printf("bout to reset f[pi] to zero for pi=%d\n", pi);
+            memset(f[pi], 0, sizeof(force) * n);
+            printf("wtf\n");
+        }
 
     printf("done wiping out arrays\n");
     // printf("initialized p=%d arrays for each body\n", p);
 
-    #pragma omp parallel for private(j, pi)
+    #pragma omp parallel for private(j, pi) shared(f)
     for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
@@ -243,12 +243,12 @@ int main(int argc, char **argv) {
     unsigned short i, pi;
 
     printf("here i am\n");
-    #pragma omp parallel private(pi)
-    {
-        printf("hello from thread %d\n", pi);
-        pi = omp_get_thread_num();
-        f[pi] = (force *) malloc(sizeof(force) * n);
-    }
+    #pragma omp parallel private(pi) shared(f)
+        {
+            printf("hello from thread %d\n", pi);
+            pi = omp_get_thread_num();
+            f[pi] = (force *) malloc(sizeof(force) * n);
+        }
     printf("finished with that stuff\n");
     #endif
 
