@@ -52,19 +52,10 @@ struct body *b;
 
 #ifdef NEWTONSTHIRD
 void compute_forces() {
-    unsigned short i, j;
-    // reset forces to 0 since we'll accumulate
+    unsigned short i, j,pi;
+    // reset forces to 0 since we'll accumulate 
 
-    unsigned short pi;
-
-    #pragma omp parallel private(pi, j)
-    {
-        pi = omp_get_thread_num();
-        for(j=0; j<n; j++){
-            f[pi][j].x = 0;
-            f[pi][j].y = 0;
-        }
-    }
+   
     // printf("initialized p=%d arrays for each body\n", p);
 
     #pragma omp parallel for private(j, pi)
@@ -72,7 +63,6 @@ void compute_forces() {
         // compute fij for all i<j ... and update f on i and f on j
         pi = omp_get_thread_num();
         // printf("wtf survived iteration %d on processor %d\n", i, pi);
-
         double fij_x, fij_y;
         double r_yi = b[i].r_y;
         double r_xi = b[i].r_x;
@@ -99,7 +89,7 @@ void compute_forces() {
 #else
 void compute_forces() {
     unsigned short i, j;
-
+	
     // reset forces to 0 since we'll accumulate
     #pragma omp parallel for private(i)
     for(i = 0 ; i < n; i++) {
@@ -179,16 +169,9 @@ int main(int argc, char **argv) {
 
     //Todo: parameterize timestep
     unsigned short t;
-
+	
     // Initialize bodies
     unsigned short j;
-    
-    //for test mode. Can remove later
-    double testM[] = {0.577852,0.919489};
-    double testrx[] = {0.458650,0.679296};
-    double testry[] = {0.755605,0.678865};
-    double testvx[] = {-0.649317, -0.495775};
-    double testvy[] = {-0.478834, -0.798279};
     #pragma omp parallel for private(j)
     for(j=0; j < n; j++) {
 
@@ -234,18 +217,28 @@ int main(int argc, char **argv) {
     printf("Simulating...\n");
 
     double startTime = omp_get_wtime();
+	unsigned short pi;
 
     #ifdef NEWTONSTHIRD
 
     f = (force **)malloc(sizeof(force*) * p);
-    unsigned short i, pi;
+    unsigned short i;
+	#pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
-        pi = omp_get_thread_num();
         f[i] = (force *) malloc(sizeof(force) * n);
     }
 
+	#pragma omp parallel private(pi, j)
+    {
+        pi = omp_get_thread_num();
+        for(j=0; j<n; j++){
+            f[pi][j].x = 0;
+            f[pi][j].y = 0;
+        }
+    }
+	
     #endif
-
+	
     // Integrate k steps
     for(t=1; t <= k; t++) {
         unsigned short i;
@@ -265,7 +258,9 @@ int main(int argc, char **argv) {
             // Reduce the force sum components in serial (p=small)
             for(j=0; j < p; j++) {
                 fx += f[j][i].x;
+				f[j][i].x = 0;
                 fy += f[j][i].y;
+				f[j][i].y = 0;
             }
 
             #else
