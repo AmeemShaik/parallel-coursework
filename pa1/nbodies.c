@@ -84,10 +84,10 @@ void compute_forces() {
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
 			fij_x = constantVal*(r_xj - r_xi);
 			fij_y = constantVal*(r_yj - r_yi);
-			f[p+pi*i].x += fij_x;
-			f[p+pi*i].y += fij_y;
-			f[p+pi*j].x -= fij_x;
-			f[p+pi*j].y -= fij_y;
+			f[i+pi*p].x += fij_x;
+			f[i+pi*p].y += fij_y;
+			f[j+pi*p].x -= fij_x;
+			f[j+pi*p].y -= fij_y;
 		}
 	}
 
