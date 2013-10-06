@@ -16,8 +16,8 @@ do
     for n in ${N_VALUES[*]}
     do
         export OMP_NUM_THREADS=$p
-        ./nbodies $NUM_BODIES $TIMESTEP $STEPS
-        ./nbodies_newton $NUM_BODIES $TIMESTEP $STEPS
+        ./nbodies $n $TIMESTEP $STEPS
+        ./nbodies_newton $n $TIMESTEP $STEPS
         #each will print (n, p, k, newtons{0,1}, walltime)
     done
 done
