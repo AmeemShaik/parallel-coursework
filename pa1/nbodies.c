@@ -238,8 +238,11 @@ int main(int argc, char **argv) {
 
     f = (force **)malloc(sizeof(force*) * p);
     unsigned short i, pi;
+
+    printf("here i am\n");
     #pragma omp parallel private(pi)
     {
+        printf("hello from thread %d\n", pi);
         pi = omp_get_thread_num();
         f[pi] = (force *) malloc(sizeof(force) * n);
     }
