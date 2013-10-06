@@ -54,19 +54,10 @@ struct body *b;
 void compute_forces() {
     unsigned short i, j;
 
-    int p = omp_get_max_threads();
-    // reset forces to 0 since we'll accumulate
-    #pragma omp parallel for
-    for(i = 0; i < n; i++) {
-        memset(f[i], 0, sizeof(force) * n);
-    }
-
-    unsigned short pi;
-    #pragma omp parallel for private(j, pi)
+    #pragma omp parallel for private(j)
 	for(i = 0 ; i < n; i++) {
         // compute fij for all i<j ... and update f on i and f on j
 
-		double fij_x, fij_y;
 		double r_yi = b[i].r_y;
 		double r_xi = b[i].r_x;
 		double iMass = b[i].m;
@@ -79,12 +70,8 @@ void compute_forces() {
 				(r_xj - r_xi)*(r_xj - r_xi));
 			//this is a constant value that is same for fx and fy. Can reuse it
 			double constantVal = (G * iMass * b[j].m)*invDistance*sqrt(invDistance);
-			fij_x = constantVal*(r_xj - r_xi);
-			fij_y = constantVal*(r_yj - r_yi);
-			f[i][j].x += fij_x;
-			f[i][j].y += fij_y;
-			f[j][i].x -= fij_x;
-			f[j][i].y -= fij_y;
+			fij.x = constantVal*(r_xj - r_xi);
+			fij.y = constantVal*(r_yj - r_yi);
 		}
 	}
 
@@ -262,7 +249,12 @@ int main(int argc, char **argv) {
 
             #ifdef NEWTONSTHIRD
             // Reduce the force sum components in serial (p=small)
-            for(j=0; j < n; j++) {
+            for(j=0; j < i; j++) {
+                fx += f[i][j].x;
+                fy += f[i][j].y;
+            }
+
+            for(j=i+1; j < n; j++) {
                 fx += f[i][j].x;
                 fy += f[i][j].y;
             }
