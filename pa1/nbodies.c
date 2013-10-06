@@ -57,7 +57,9 @@ void compute_forces() {
     int p = omp_get_max_threads();
     // reset forces to 0 since we'll accumulate
 
-    f = (force **)malloc(sizeof(force*) * p);
+    if (f == NULL) {
+        f = (force **)malloc(sizeof(force*) * p);   
+    }
     #pragma omp parallel for private(i)
     for(i = 0; i < p; i++) {
         f[i] = (force *) malloc(sizeof(force) * n);
