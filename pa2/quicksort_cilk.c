@@ -61,7 +61,11 @@ void quicksort(long *array,int left,int right){
 int partition(long *array, int left, int right){
     
     int n = (right - left + 1);
-    int k = (int) log(n);
+    int k = (int) log2(n);
+
+    printf("n=%d, k=%d\n", n, k);
+    assert((1 << k) == n);
+
     long result[n];
 
     // Flag arrays for less than, greater than, equal to.
@@ -110,6 +114,9 @@ int partition(long *array, int left, int right){
     cilk_for (i = 0; i < n; i++) {
         array[i] = result[i];
     }
+
+    printf("partition(array, %d, %d)\n", left, right);
+    printArray(result, n);
 
 }
 
