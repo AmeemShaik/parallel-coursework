@@ -6,6 +6,7 @@
 
 
 void printArray(long *A, int n){
+    #ifdef PRINTMODE
     int i;
 
     printf("[");
@@ -16,6 +17,7 @@ void printArray(long *A, int n){
         }
     }
     printf("]\n");
+    #endif
 }
 
 /* Inclusive, in-place parallel prefix sum. 
@@ -51,7 +53,9 @@ void quicksort(long *array,int left,int right){
     //select the first element as pivot
     if(left<right){
         int splitPoint = partition(array,left, right);
+        #ifdef PRINTMODE
         printf("partition done, returned splitpoint =%d\n", splitPoint);
+        #endif
         cilk_spawn quicksort(array,left,splitPoint-1);
         quicksort(array,splitPoint+1,right);
         cilk_sync;
@@ -59,13 +63,15 @@ void quicksort(long *array,int left,int right){
 }
 int partition(long *array, int left, int right){
     
+    #ifdef PRINTMODE
     printf("============================================\n");
     printf("partition(array, %d, %d)\n", left, right);
+    #endif
 
     int n = (right - left + 1);
     int k = (int) log2(n);
 
-    printf("n=%d, k=%d\n", n, k);
+    // printf("n=%d, k=%d\n", n, k);
 
     long result[n];
 
@@ -83,8 +89,14 @@ int partition(long *array, int left, int right){
         result[i] = 0;
     }
 
+
+    int pivotLoc = (rand() % n) - 1;
+    long copy = array[pivotLoc];
+    array[pivotLoc] = array[right];
+    array[right] = copy;
+
     long pivot = array[right];
-    printf("pivot=%d\n", pivot);
+    // printf("pivot=%d\n", pivot);
     cilk_for (i = 0; i < n; i++) {
         if (array[i] < pivot) {
             lt[i] = 1;
@@ -108,8 +120,10 @@ int partition(long *array, int left, int right){
     int lt_index_max = lt_indices[n-1],
         eq_index_max = eq_indices[n-1] + lt_index_max;
 
+    #ifdef PRINTMODE
     printf("lt_index_max = %d\n", lt_index_max);
     printf("eq_index_max = %d\n", eq_index_max);
+    #endif
 
     cilk_for (i = 0; i < n; i++) {
         if (lt[i]) {
