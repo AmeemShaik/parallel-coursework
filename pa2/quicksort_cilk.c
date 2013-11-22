@@ -24,9 +24,6 @@ void printArray(long *A, int n){
 */
 void parallel_prefix_sum(short int *X, int *S, int n, int k) {
 
-    assert (n == (1 << k));
-    assert (X != NULL && S != NULL);
-
     int i, h;
 
     cilk_for(i = 1; i <= n; i++) {
@@ -54,6 +51,7 @@ void quicksort(long *array,int left,int right){
     //select the first element as pivot
     if(left<right){
         int splitPoint = partition(array,left, right);
+        printf("partition done, returned splitpoint =%d\n", splitPoint);
         cilk_spawn quicksort(array,left,splitPoint-1);
         quicksort(array,splitPoint+1,right);
         cilk_sync;
@@ -61,11 +59,13 @@ void quicksort(long *array,int left,int right){
 }
 int partition(long *array, int left, int right){
     
+    printf("============================================\n");
+    printf("partition(array, %d, %d)\n", left, right);
+
     int n = (right - left + 1);
     int k = (int) log2(n);
 
     printf("n=%d, k=%d\n", n, k);
-    assert((1 << k) == n);
 
     long result[n];
 
@@ -84,6 +84,7 @@ int partition(long *array, int left, int right){
     }
 
     long pivot = array[right];
+    printf("pivot=%d\n", pivot);
     cilk_for (i = 0; i < n; i++) {
         if (array[i] < pivot) {
             lt[i] = 1;
@@ -124,8 +125,9 @@ int partition(long *array, int left, int right){
         array[i] = result[i];
     }
 
-    printf("partition(array, %d, %d)\n", left, right);
     printArray(result, n);
+
+    return eq_index_max - 1;
 
 }
 
