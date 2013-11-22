@@ -8,4 +8,4 @@ all:
 
 	gcc -fopenmp -DPARALLEL quicksort.c -o qParallel 
 
-	gcc -g prefix_sum.c -o prefix_sum -lcilkrts -ldl -fcilkplus
+	gcc quicksort_cilk.c -o quicksort_cilk -lcilkrts -ldl -fcilkplus
