@@ -80,18 +80,23 @@ int partition(long *array, int left, int right){
 
     int i;
     cilk_for (i = 0; i < n; i++) {
-        if (array[i] < array[right]) {
+        result[i] = 0;
+    }
+
+    long pivot = array[right];
+    cilk_for (i = 0; i < n; i++) {
+        if (array[i] < pivot) {
             lt[i] = 1;
             eq[i] = 0;
             gt[i] = 0;
-        } else if (array[i] == array[right]) {
+        } else if (array[i] == pivot) {
             lt[i] = 0;
             eq[i] = 1;
             gt[i] = 0;
         } else {
             lt[i] = 0;
             eq[i] = 0;
-            gt[i] = 0;
+            gt[i] = 1;
         }
     }
 
