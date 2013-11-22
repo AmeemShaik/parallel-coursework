@@ -1,4 +1,4 @@
-#include <iostream>
+#include <stdio.h>
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 
@@ -9,19 +9,22 @@
 void parallel_prefix_sum(long *X, long *S, int n, int k) {
 
     assert (n == (1 << k));
+    assert (X != NULL && S != NULL);
 
-    cilk_for(int i = 0; i < n; i++) {
+    int i, h;
+
+    cilk_for(i = 0; i < n; i++) {
         S[i] = X[i];
     }
 
-    for(int h = 0 ; h < k ; h++) {
-        cilk_for (int i = 0; i < ( n >> h) ; i++) {
+    for(h = 0 ; h < k ; h++) {
+        cilk_for (i = 0; i < ( n >> h) ; i++) {
             S[i * (1 << h)] = S[i * (1 << h) - (1 << (h-1))] + S[i * (i << h)];
         }
     }
 
-    for (int h = k-1 ; h >= 0; h--) {
-        cilk_for(int i = 2; i < (n >> (h-1)) ; i++){
+    for (h = k-1 ; h >= 0; h--) {
+        cilk_for(i = 2; i < (n >> (h-1)) ; i++){
             if (i % 2) {
                 S[i * (1 << (h-1))] = S[i * (1 << (h-1)) - (1 << (h-1))] + S[i * (1 << (h-1))];
             }
@@ -31,16 +34,16 @@ void parallel_prefix_sum(long *X, long *S, int n, int k) {
 }
 
 void printArray(long *A, int n){
-    using namespace std;
+    int i;
 
-    cout << "[";
-    for (int i = 0; i < n ; i++) {
-        cout << A[i];
+    printf("[");
+    for (i = 0; i < n ; i++) {
+        printf("%ld", A[i]);
         if ( i != n-1) {
-            cout << ", ";
+            printf(", ");
         }
     }
-    cout << "]\n";
+    printf("]]\n");
 }
 
 int main(int argc, char **argv) {
