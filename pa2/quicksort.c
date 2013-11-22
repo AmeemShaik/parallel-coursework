@@ -3,9 +3,11 @@
 #include <time.h>
 #include <omp.h>
 
-void quicksort(long long*,int,int);
-int partition(long long*,int,int);
-void printArray(long long*, int size);
+#define LOWLIMIT 100000
+
+void quicksort(long*,int,int);
+int partition(long*,int,int);
+void printArray(long*, int size);
 
 static unsigned int size;
 int main(int argc, char **argv)
@@ -15,12 +17,12 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     size = atoi(argv[1]);
-    long long *array;
-    array = malloc(size*sizeof(long long));
+    long *array;
+    array = malloc(size*sizeof(long));
     int i;
     srand(time(NULL));
     for(i = 0; i < size; i++){
-        long long r = rand()%size;
+        long r = rand()%size;
         array[i] = r;
     }
     #ifdef PRINTMODE
@@ -30,14 +32,27 @@ int main(int argc, char **argv)
 
     int left = 0;
     int right = size-1;
-    quicksort(array, left, right);
+    #ifdef PARALLEL
+    {
+        #pragma omp parallel
+        {
+            #pragma omp single
+            quicksort(array, left, right); 
+        }
+    }
+    #else
+    {
+        quicksort(array, left, right);
+    }
+    #endif
+
     #ifdef PRINTMODE
     printf("Sorted Array\n");
     printArray(array,size);
     #endif
     return 0;
 }
-void printArray(long long *array,int size){
+void printArray(long *array,int size){
     int i;
     printf("[");
     for(i=0;i<size;i++){
@@ -45,16 +60,28 @@ void printArray(long long *array,int size){
     }
     printf("]\n");
 }
-void quicksort(long long *array,int left,int right){
-    //select the first element as pivot
+void quicksort(long *array,int left,int right){
     if(left<right){
-    	#ifdef PARALLEL
+        #ifdef PARALLEL
         int splitPoint = partition(array,left, right);
-        #pragma omp task
-        quicksort(array,left,splitPoint-1);
-        #pragma omp task
-        quicksort(array,splitPoint+1,right);
-	
+        if(splitPoint-left>LOWLIMIT)
+        {
+            #pragma omp task
+            quicksort(array,left,splitPoint-1);
+        }
+        else
+        {
+            quicksort(array,left,splitPoint-1);
+        }
+        if(right-splitPoint>LOWLIMIT)
+        {
+            #pragma omp task
+            quicksort(array,splitPoint+1,right); 
+        }
+        else
+        { 
+            quicksort(array,splitPoint+1,right);
+        }
         #else
         int splitPoint = partition(array,left, right);
         quicksort(array,left,splitPoint-1);
@@ -62,12 +89,9 @@ void quicksort(long long *array,int left,int right){
         #endif
     }
 }
-int partition(long long *array,int left,int right){
-    int pivotIndex = (rand()%(right+1-left))+left;
-    long long temp = array[pivotIndex];
-    array[pivotIndex] = array[right];
-    array[right] = temp;
-    long long pivot = array[right];
+int partition(long *array,int left,int right){
+    long temp;
+    long pivot = array[right];
     int i = left-1;
     int j;
     for(j=left; j<right;j++){
