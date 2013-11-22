@@ -56,6 +56,7 @@ void quicksort(long *array,int left,int right){
         int splitPoint = partition(array,left, right);
         cilk_spawn quicksort(array,left,splitPoint-1);
         quicksort(array,splitPoint+1,right);
+        cilk_sync;
     }
 }
 int partition(long *array, int left, int right){
@@ -100,6 +101,9 @@ int partition(long *array, int left, int right){
 
     int lt_index_max = lt_indices[n-1],
         eq_index_max = eq_indices[n-1] + lt_index_max;
+
+    printf("lt_index_max = %d\n", lt_index_max);
+    printf("eq_index_max = %d\n", eq_index_max);
 
     cilk_for (i = 0; i < n; i++) {
         if (lt[i]) {
