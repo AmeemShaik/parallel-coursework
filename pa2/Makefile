@@ -7,3 +7,5 @@ all:
 	gcc -fopenmp -DPARALLEL -DPRINTMODE quicksort.c -o qParallelPrint
 
 	gcc -fopenmp -DPARALLEL quicksort.c -o qParallel 
+
+	gcc prefix_sum.cpp -o prefix_sum -lcilkrts -ldl -fcilkplus
