@@ -5,7 +5,7 @@
 #include <cilk/cilk_api.h>
 
 // Array size at which to degrade to insertion sort.
-#define SIZE_DEGRADE_PARAM 8
+#define SIZE_DEGRADE_PARAM 0
 
 void printArray(long *A, int n){
     #ifdef PRINTMODE
@@ -112,6 +112,12 @@ int partition(long *array, int left, int right){
     cilk_for (i = 0; i < n; i++) {
         result[i] = 0;
     }
+
+    // Swap a random member into the rightmost slot
+    i = left + rand() % (right - left + 1);
+    long copy = array[i];
+    array[i] = array[right];
+    array[right] = copy;
 
     long pivot = array[right];
     // printf("pivot=%d\n", pivot);
