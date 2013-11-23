@@ -4,6 +4,8 @@
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 
+// Array size at which to degrade to insertion sort.
+#define SIZE_DEGRADE_PARAM 8
 
 void printArray(long *A, int n){
     #ifdef PRINTMODE
@@ -49,17 +51,39 @@ void parallel_prefix_sum(short int *X, int *S, int n, int k) {
 
 }
 
-void quicksort(long *array,int left,int right){
-    //select the first element as pivot
-    if(left<right){
-        int splitPoint = partition(array,left, right);
-        #ifdef PRINTMODE
-        printf("partition done, returned splitpoint =%d\n", splitPoint);
-        #endif
-        cilk_spawn quicksort(array,left,splitPoint-1);
-        quicksort(array,splitPoint+1,right);
-        cilk_sync;
+void insertionSort(long *array, int left, int right) {
+
+    int i, j, val;
+    for(i = left; i <= right; i++) {
+        val = array[i];
+        j = i - 1;
+        while( j >= 0 && array[j] > val) {
+            array[j+1] = array[j];
+            j--;
+        }
+        array[j+1] = val;
     }
+}
+
+void quicksort(long *array,int left,int right){
+
+    if(left >= right) {
+        return;
+    }
+
+    // Degrade to insertion sort.
+    if (right - left + 1 < SIZE_DEGRADE_PARAM) {
+        insertionSort(array, left, right);
+        return;
+    }
+
+    int splitPoint = partition(array,left, right);
+    #ifdef PRINTMODE
+    printf("partition done, returned splitpoint =%d\n", splitPoint);
+    #endif
+    cilk_spawn quicksort(array,left,splitPoint-1);
+    quicksort(array,splitPoint+1,right);
+    cilk_sync;
 }
 int partition(long *array, int left, int right){
     
@@ -88,12 +112,6 @@ int partition(long *array, int left, int right){
     cilk_for (i = 0; i < n; i++) {
         result[i] = 0;
     }
-
-
-    int pivotLoc = (rand() % n) - 1;
-    long copy = array[pivotLoc];
-    array[pivotLoc] = array[right];
-    array[right] = copy;
 
     long pivot = array[right];
     // printf("pivot=%d\n", pivot);

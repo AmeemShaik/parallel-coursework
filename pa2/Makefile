@@ -9,3 +9,5 @@ all:
 	gcc -fopenmp -DPARALLEL quicksort.c -o qParallel 
 
 	gcc quicksort_cilk.c -o quicksort_cilk -lcilkrts -ldl -fcilkplus
+
+	gcc -DPRINTMODE quicksort_cilk.c -o quicksort_cilk_print -lcilkrts -ldl -fcilkplus
