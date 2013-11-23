@@ -7,6 +7,21 @@
 // Array size at which to degrade to insertion sort.
 #define SIZE_DEGRADE_PARAM 0
 
+// Random int from [low, high)
+int random_int (unsigned int low, unsigned int high)
+{
+  int random = rand();
+  if (RAND_MAX == random) return random_int(low, high);
+  int range = high - low,
+      remain = RAND_MAX % range,
+      slot = RAND_MAX / range;
+  if (random < RAND_MAX - remain) {
+    return low + random / slot;
+  } else {
+    return random_int (low, high);
+  }
+}
+
 void printArray(long *A, int n){
     #ifdef PRINTMODE
     int i;
@@ -67,6 +82,8 @@ void insertionSort(long *array, int left, int right) {
 
 void quicksort(long *array,int left,int right){
 
+    printf("quicksort(array, %d, %d)\n", left, right);
+
     if(left >= right) {
         return;
     }
@@ -114,7 +131,7 @@ int partition(long *array, int left, int right){
     }
 
     // Swap a random member into the rightmost slot
-    i = left + rand() % (right - left + 1);
+    i = random_int(left, right);
     long copy = array[i];
     array[i] = array[right];
     array[right] = copy;
@@ -145,6 +162,7 @@ int partition(long *array, int left, int right){
         eq_index_max = eq_indices[n-1] + lt_index_max;
 
     #ifdef PRINTMODE
+    printf("pivot = %d\n", pivot);
     printf("lt_index_max = %d\n", lt_index_max);
     printf("eq_index_max = %d\n", eq_index_max);
     #endif
@@ -159,7 +177,11 @@ int partition(long *array, int left, int right){
         }
     }
 
-    cilk_for (i = 0; i < n; i++) {
+    #ifdef PRINTMODE
+    printArray(result, n);
+    #endif
+
+    cilk_for (i = left; i <= right; i++) {
         array[i] = result[i];
     }
 
@@ -181,8 +203,8 @@ int main(int argc, char **argv) {
         int i;
         srand(time(NULL));
         for(i = 0; i < size; i++){
-            long r = rand()%size;
-            array[i] = r;
+            long r = size - i;
+            array[i] = rand() % size*2;
         }
         #ifdef PRINTMODE
         printf("Unsorted Array\n");
