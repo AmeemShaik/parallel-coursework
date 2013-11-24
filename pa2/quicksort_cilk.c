@@ -23,7 +23,6 @@ int random_int (unsigned int low, unsigned int high)
 }
 
 void printArray(long *A, int lo, int hi){
-    #ifdef PRINTMODE
     int i;
 
     printf("[");
@@ -34,7 +33,6 @@ void printArray(long *A, int lo, int hi){
         }
     }
     printf("]\n");
-    #endif
 }
 
 /* Inclusive, in-place parallel prefix sum. 
@@ -95,10 +93,8 @@ void quicksort_recursive(long *array,int left,int right, long* copyArray){
     }
 
     int splitPoint = partition(array,left, right, copyArray);
-    #ifdef PRINTMODE
     printf("partition done, returned splitpoint =%d\n", splitPoint);
     printArray(array, left, right);
-    #endif
     cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
     quicksort_recursive(array,splitPoint+1,right,copyArray);
     cilk_sync;
@@ -209,10 +205,8 @@ int partition(long *array, int left, int right, long* copyArray){
 
 int partition_bad(long *array, int left, int right, long* copyArray){
     
-    #ifdef PRINTMODE
     printf("============================================\n");
     printf("partition(array, %d, %d)\n", left, right);
-    #endif
 
     int n = (right - left + 1);
     int k = (int) log2(n);
@@ -258,11 +252,9 @@ int partition_bad(long *array, int left, int right, long* copyArray){
     int lt_index_max = lt_indices[n-1],
         eq_index_max = eq_indices[n-1] + lt_index_max;
 
-    #ifdef PRINTMODE
     printf("pivot = %d\n", pivot);
     printf("lt_index_max = %d\n", lt_index_max);
     printf("eq_index_max = %d\n", eq_index_max);
-    #endif
 
     cilk_for (i = left; i <= right; i++) {
         if (lt[i-left]) {
@@ -301,19 +293,15 @@ int main(int argc, char **argv) {
             array[i] = r;
             // array[i] = rand() % size*2;
         }
-        #ifdef PRINTMODE
-        printf("Unsorted Array\n");
+            printf("Unsorted Array\n");
         printArray(array, 0, size-1);
-        #endif
-
+    
         int left = 0;
         int right = size-1;
         quicksort(array, size);
-        #ifdef PRINTMODE
-        printf("Sorted Array\n");
+            printf("Sorted Array\n");
         printArray(array, 0, size-1);
-        #endif
-        return 0;
+            return 0;
 }
 
 
