@@ -51,6 +51,7 @@ int main(int argc, char **argv)
     }
     #endif
     stop = clock();
+    time_elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
 
     #ifdef PRINTMODE
     printf("Sorted Array\n");
