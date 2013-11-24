@@ -222,7 +222,7 @@ int partition(long *array, int left, int right, long* copyArray){
 
 }
 
-int main(int argc, char **argv) {
+int cilk_main(int argc, char **argv) {
 
     clock_t start, stop;
     double time_elapsed;
