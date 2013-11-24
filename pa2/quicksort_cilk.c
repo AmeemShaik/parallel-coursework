@@ -8,6 +8,16 @@
 // Array size at which to degrade to insertion sort.
 #define SIZE_DEGRADE_PARAM 0
 
+void dbg_printf(const char *fmt, ...)
+{
+    #ifdef PRINTMODE
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    #endif
+}
+
 // Random int from [low, high)
 int random_int (unsigned int low, unsigned int high)
 {
@@ -87,7 +97,7 @@ void insertionSort(long *array, int left, int right) {
 
 void quicksort_recursive(long *array,int left,int right, long* copyArray){
 
-    printf("quicksort(array, %d, %d)\n", left, right);
+    dbg_printf("quicksort(array, %d, %d)\n", left, right);
 
     if(left >= right) {
         return;
@@ -100,7 +110,7 @@ void quicksort_recursive(long *array,int left,int right, long* copyArray){
     }
 
     int splitPoint = partition(array,left, right, copyArray);
-    printf("partition done, returned splitpoint =%d\n", splitPoint);
+    dbg_printf("partition done, returned splitpoint =%d\n", splitPoint);
     dbg_printArray(array, left, right);
     cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
     quicksort_recursive(array,splitPoint+1,right,copyArray);
@@ -128,7 +138,7 @@ int partition(long *array, int left, int right, long* copyArray){
     long pivot = array[i];
     array[i] = array[right];
     array[right] = pivot;
-    printf("pivot = %ld\n", pivot);
+    dbg_printf("pivot = %ld\n", pivot);
 
     // Set flags in comparison flag arrays
     cilk_for (i = 0; i < n; i++) {
@@ -147,22 +157,22 @@ int partition(long *array, int left, int right, long* copyArray){
         }
     }
 
-    printf("lt flags:\n");
+    dbg_printf("lt flags:\n");
     for(i=0; i < n; i++) {
-        printf("%ld ", (long)lt[i]);
+        dbg_printf("%ld ", (long)lt[i]);
     }
-    printf("\n");
+    dbg_printf("\n");
     // dbg_printArray((long *) lt, 0, n-1);
-    printf("eq flags:\n");
+    dbg_printf("eq flags:\n");
     for(i=0; i < n; i++) {
-        printf("%ld ", (long)eq[i]);
+        dbg_printf("%ld ", (long)eq[i]);
     }
-    printf("\n");
-    printf("gt flags:\n");
+    dbg_printf("\n");
+    dbg_printf("gt flags:\n");
     for(i=0; i < n; i++) {
-        printf("%ld ", (long)gt[i]);
+        dbg_printf("%ld ", (long)gt[i]);
     }
-    printf("\n");
+    dbg_printf("\n");
 
     // Compute index mappings from the flag arrays and make them consecutive
     lt[0] += left;
@@ -175,21 +185,21 @@ int partition(long *array, int left, int right, long* copyArray){
     eq[0] -= lt_indices[n-1];
     lt[0] -= left;
 
-    printf("lt_indices:\n");
+    dbg_printf("lt_indices:\n");
     for(i=0; i < n; i++) {
-        printf("%ld ", (long)lt_indices[i]);
+        dbg_printf("%ld ", (long)lt_indices[i]);
     }
-    printf("\n");
-    printf("eq_indices:\n");
+    dbg_printf("\n");
+    dbg_printf("eq_indices:\n");
     for(i=0; i < n; i++) {
-        printf("%ld ", (long)eq_indices[i]);
+        dbg_printf("%ld ", (long)eq_indices[i]);
     }
-    printf("\n");
-    printf("gt_indices:\n");
+    dbg_printf("\n");
+    dbg_printf("gt_indices:\n");
     for(i=0; i < n; i++) {
-        printf("%ld ", (long)gt_indices[i]);
+        dbg_printf("%ld ", (long)gt_indices[i]);
     }
-    printf("\n");
+    dbg_printf("\n");
 
     // Now use these mappings to swap in parallel
     cilk_for (i = left; i <= right; i++) {
@@ -212,8 +222,8 @@ int partition(long *array, int left, int right, long* copyArray){
 
 int partition_bad(long *array, int left, int right, long* copyArray){
     
-    printf("============================================\n");
-    printf("partition(array, %d, %d)\n", left, right);
+    dbg_printf("============================================\n");
+    dbg_printf("partition(array, %d, %d)\n", left, right);
 
     int n = (right - left + 1);
     int k = (int) log2(n);
@@ -259,19 +269,19 @@ int partition_bad(long *array, int left, int right, long* copyArray){
     int lt_index_max = lt_indices[n-1],
         eq_index_max = eq_indices[n-1] + lt_index_max;
 
-    printf("pivot = %d\n", pivot);
-    printf("lt_index_max = %d\n", lt_index_max);
-    printf("eq_index_max = %d\n", eq_index_max);
+    dbg_printf("pivot = %d\n", pivot);
+    dbg_printf("lt_index_max = %d\n", lt_index_max);
+    dbg_printf("eq_index_max = %d\n", eq_index_max);
 
     cilk_for (i = left; i <= right; i++) {
         if (lt[i-left]) {
-            printf("array[%d]-->array[%d] %d < pivot\n", i, left + lt_indices[i] - 1, array[i]);
+            dbg_printf("array[%d]-->array[%d] %d < pivot\n", i, left + lt_indices[i] - 1, array[i]);
             copyArray[left + lt_indices[i-left] - 1] = array[i];
         } else if (eq[i-left]) {
-            printf("array[%d]-->array[%d] %d == pivot\n", i, left + eq_indices[i] + lt_index_max - 1, array[i]);
+            dbg_printf("array[%d]-->array[%d] %d == pivot\n", i, left + eq_indices[i] + lt_index_max - 1, array[i]);
             copyArray[left + eq_indices[i-left] + lt_index_max - 1] = array[i];
         } else if (gt[i-left]) {
-            printf("array[%d]-->array[%d] %d > pivot\n", i, left + gt_indices[i] + eq_index_max - 1, array[i]);
+            dbg_printf("array[%d]-->array[%d] %d > pivot\n", i, left + gt_indices[i] + eq_index_max - 1, array[i]);
             copyArray[left + gt_indices[i-left] + eq_index_max - 1] = array[i];
         }
     }
@@ -287,7 +297,7 @@ int partition_bad(long *array, int left, int right, long* copyArray){
 int main(int argc, char **argv) {
 
     if(argc!=2){
-            printf("Incorrect number of arguments, expected 1 argument\n");
+            dbg_printf("Incorrect number of arguments, expected 1 argument\n");
             return EXIT_FAILURE;
         }
         int size = atoi(argv[1]);
