@@ -12,6 +12,10 @@ void printArray(long *A, int lo, int hi);
 static unsigned int size;
 int main(int argc, char **argv)
 {
+
+    clock_t start, stop;
+    double time_elapsed;
+
     if(argc!=2){
         printf("Incorrect number of arguments, expected 1 argument\n");
         return EXIT_FAILURE;
@@ -32,6 +36,7 @@ int main(int argc, char **argv)
 
     int left = 0;
     int right = size-1;
+    start = clock();
     #ifdef PARALLEL
     {
         #pragma omp parallel
@@ -45,11 +50,13 @@ int main(int argc, char **argv)
         quicksort(array, left, right);
     }
     #endif
+    stop = clock();
 
     #ifdef PRINTMODE
     printf("Sorted Array\n");
     printArray(array,0, size-1);
     #endif
+    printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
     return 0;
 }
 

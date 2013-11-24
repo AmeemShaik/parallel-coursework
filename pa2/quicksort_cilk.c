@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 
@@ -296,29 +297,35 @@ int partition_bad(long *array, int left, int right, long* copyArray){
 
 int main(int argc, char **argv) {
 
+    clock_t start, stop;
+    double time_elapsed;
+
     if(argc!=2){
-            dbg_printf("Incorrect number of arguments, expected 1 argument\n");
-            return EXIT_FAILURE;
-        }
-        int size = atoi(argv[1]);
-        long *array;
-        array = malloc(size*sizeof(long));
-        int i;
-        srand(time(NULL));
-        for(i = 0; i < size; i++){
-            long r = size - i;
-            array[i] = r;
-            // array[i] = rand() % size*2;
-        }
-        printf("Unsorted Array\n");
-        printArray(array, 0, size-1);
-    
-        int left = 0;
-        int right = size-1;
-        quicksort(array, size);
-        printf("Sorted Array\n");
-        printArray(array, 0, size-1);
-            return 0;
+        dbg_printf("Incorrect number of arguments, expected 1 argument\n");
+        return EXIT_FAILURE;
+    }
+    int size = atoi(argv[1]);
+    long *array;
+    array = malloc(size*sizeof(long));
+    int i;
+    srand(time(NULL));
+    for(i = 0; i < size; i++){
+        long r = size - i;
+        array[i] = r;
+        // array[i] = rand() % size*2;
+    }
+    dbg_printf("Unsorted Array\n");
+    dbg_printArray(array, 0, size-1);
+
+    start = clock();
+    quicksort(array, size);
+    stop = clock();
+    time_elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
+
+    dbg_printf("Sorted Array\n");
+    dbg_printArray(array, 0, size-1);
+    printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
+    return 0;
 }
 
 
