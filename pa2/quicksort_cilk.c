@@ -110,6 +110,104 @@ void quicksort(long *array, int size) {
 }
 
 int partition(long *array, int left, int right, long* copyArray){
+
+    // Compute n, k for helper prefix sum
+    int n = (right - left + 1),
+        k = (int) log2(n),
+        i;
+
+    // Flag and index arrays
+    short int lt[n], eq[n], gt[n];
+    int lt_indices[n], eq_indices[n], gt_indices[n];
+
+    // Get a random pivot
+    i = random_int(left, right);
+    long pivot = array[i];
+    array[i] = array[right];
+    array[right] = pivot;
+    printf("pivot = %ld\n", pivot);
+
+    // Set flags in comparison flag arrays
+    cilk_for (i = 0; i < n; i++) {
+        if (array[left + i] < pivot) {
+            lt[i] = 1;
+            eq[i] = 0;
+            gt[i] = 0;
+        } else if (array[left + i] == pivot) {
+            lt[i] = 0;
+            eq[i] = 1;
+            gt[i] = 0;
+        } else {
+            lt[i] = 0;
+            eq[i] = 0;
+            gt[i] = 1;
+        }
+    }
+
+    printf("lt flags:\n");
+    for(i=0; i < n; i++) {
+        printf("%ld ", (long)lt[i]);
+    }
+    printf("\n");
+    // printArray((long *) lt, 0, n-1);
+    printf("eq flags:\n");
+    for(i=0; i < n; i++) {
+        printf("%ld ", (long)eq[i]);
+    }
+    printf("\n");
+    printf("gt flags:\n");
+    for(i=0; i < n; i++) {
+        printf("%ld ", (long)gt[i]);
+    }
+    printf("\n");
+
+    // Compute index mappings from the flag arrays and make them consecutive
+    lt[0] += left;
+    parallel_prefix_sum(lt, lt_indices, n, k);
+    eq[0] += lt_indices[n-1];
+    parallel_prefix_sum(eq, eq_indices, n, k);
+    gt[0] += eq_indices[n-1];
+    parallel_prefix_sum(gt, gt_indices, n, k);
+    gt[0] -= eq_indices[n-1];
+    eq[0] -= lt_indices[n-1];
+    lt[0] -= left;
+
+    printf("lt_indices:\n");
+    for(i=0; i < n; i++) {
+        printf("%ld ", (long)lt_indices[i]);
+    }
+    printf("\n");
+    printf("eq_indices:\n");
+    for(i=0; i < n; i++) {
+        printf("%ld ", (long)eq_indices[i]);
+    }
+    printf("\n");
+    printf("gt_indices:\n");
+    for(i=0; i < n; i++) {
+        printf("%ld ", (long)gt_indices[i]);
+    }
+    printf("\n");
+
+    // Now use these mappings to swap in parallel
+    cilk_for (i = left; i <= right; i++) {
+        if ( lt[i - left] ) {
+            copyArray[lt_indices[i-left] - 1] = array[i];
+        } else if ( eq [i - left] ) {
+            copyArray[eq_indices[i-left] - 1] = array[i];
+        } else{
+            copyArray[gt_indices[i-left] - 1] = array[i];
+        }
+    }
+
+    cilk_for (i = left; i <= right; i++) {
+        array[i] = copyArray[i];
+    }
+
+    return eq_indices[n-1] - 1;
+
+}
+
+int partition_bad(long *array, int left, int right, long* copyArray){
     
     #ifdef PRINTMODE
     printf("============================================\n");
@@ -167,15 +265,15 @@ int partition(long *array, int left, int right, long* copyArray){
     #endif
 
     cilk_for (i = left; i <= right; i++) {
-        if (lt[i]) {
-            printf("array[%d]-->array[%d] %d < pivot = %d\n", i, lt_indices[i] - 1, array[i], pivot);
-            copyArray[lt_indices[i] - 1] = array[i];
-        } else if (eq[i]) {
-            printf("array[%d]-->array[%d] %d == pivot = %d\n", i, eq_indices[i] + lt_index_max - 1, array[i], pivot);
-            copyArray[eq_indices[i] + lt_index_max - 1] = array[i];
-        } else if (gt[i]) {
-            printf("array[%d]-->array[%d] %d > pivot = %d\n", i, gt_indices[i] + eq_index_max - 1, array[i], pivot);
-            copyArray[gt_indices[i] + eq_index_max - 1] = array[i];
+        if (lt[i-left]) {
+            printf("array[%d]-->array[%d] %d < pivot\n", i, left + lt_indices[i] - 1, array[i]);
+            copyArray[left + lt_indices[i-left] - 1] = array[i];
+        } else if (eq[i-left]) {
+            printf("array[%d]-->array[%d] %d == pivot\n", i, left + eq_indices[i] + lt_index_max - 1, array[i]);
+            copyArray[left + eq_indices[i-left] + lt_index_max - 1] = array[i];
+        } else if (gt[i-left]) {
+            printf("array[%d]-->array[%d] %d > pivot\n", i, left + gt_indices[i] + eq_index_max - 1, array[i]);
+            copyArray[left + gt_indices[i-left] + eq_index_max - 1] = array[i];
         }
     }
 
@@ -200,7 +298,8 @@ int main(int argc, char **argv) {
         srand(time(NULL));
         for(i = 0; i < size; i++){
             long r = size - i;
-            array[i] = rand() % size*2;
+            array[i] = r;
+            // array[i] = rand() % size*2;
         }
         #ifdef PRINTMODE
         printf("Unsorted Array\n");
