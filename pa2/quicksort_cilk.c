@@ -7,7 +7,7 @@
 #include <cilk/cilk_api.h>
 
 // Array size at which to degrade to insertion sort.
-#define SIZE_DEGRADE_PARAM 0
+#define SIZE_DEGRADE_PARAM 16
 
 void dbg_printf(const char *fmt, ...)
 {
@@ -67,7 +67,6 @@ void parallel_prefix_sum(short int *X, int *S, int n, int k) {
 
     for(h = 1 ; h <= k ; h++) {
         cilk_for (i = 1; i <= ( n >> h) ; i++) {
-            // S[i * (1 << h)] = S[i * (1 << h) - (1 << (h-1))] + S[i * (i << h)];
             S[i * (1 << h) - 1] += S[(1 << h) * i - (1 << (h-1)) - 1];
         }
     }
