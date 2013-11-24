@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <omp.h>
-
 #define LOWLIMIT 100000
 
 void quicksort(long *array,int left,int right);
