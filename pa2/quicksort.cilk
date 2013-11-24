@@ -12,6 +12,20 @@
 // Array size at which to degrade to insertion sort.
 #define SIZE_DEGRADE_PARAM 16
 
+
+void dbg_printf(const char *fmt, ...);
+int random_int (unsigned int low, unsigned int high);
+void printArray(long *A, int lo, int hi);
+void dbg_printArray(long *A, int lo, int hi);
+void parallel_prefix_sum(short int *X, int *S, int n, int k);
+void insertionSort(long *array, int left, int right);
+void quicksort_recursive(long *array,int left,int right, long* copyArray);
+void quicksort(long *array, int size);
+int partition(long *array, int left, int right, long* copyArray);
+int cilk_main(int argc, char **argv);
+
+
+
 void dbg_printf(const char *fmt, ...)
 {
     #ifdef PRINTMODE
