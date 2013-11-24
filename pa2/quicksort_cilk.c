@@ -1,10 +1,13 @@
+// Standard includes
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <cilk/cilk.h>
-#include <cilk/cilk_api.h>
+
+// Cilk includes
+#include <cilk.h>
+#include <cilkview.h>
 
 // Array size at which to degrade to insertion sort.
 #define SIZE_DEGRADE_PARAM 16
