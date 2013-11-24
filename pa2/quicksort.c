@@ -5,9 +5,9 @@
 
 #define LOWLIMIT 100000
 
-void quicksort(long*,int,int);
-int partition(long*,int,int);
-void printArray(long*, int size);
+void quicksort(long *array,int left,int right);
+int partition(long *array,int left,int right);
+void printArray(long *A, int lo, int hi);
 
 static unsigned int size;
 int main(int argc, char **argv)
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     }
     #ifdef PRINTMODE
     printf("Unsorted Array\n");
-    printArray(array,size);
+    printArray(array,0, size-1);
     #endif
 
     int left = 0;
@@ -48,18 +48,30 @@ int main(int argc, char **argv)
 
     #ifdef PRINTMODE
     printf("Sorted Array\n");
-    printArray(array,size);
+    printArray(array,0, size-1);
     #endif
     return 0;
 }
-void printArray(long *array,int size){
+
+void printArray(long *A, int lo, int hi){
     int i;
+
     printf("[");
-    for(i=0;i<size;i++){
-        printf("%lld,",array[i]);
+    for (i = lo; i <= hi ; i++) {
+        printf("%ld", A[i]);
+        if ( i != hi) {
+            printf(", ");
+        }
     }
     printf("]\n");
 }
+
+void dbg_printArray(long *A, int lo, int hi) {
+    #ifdef PRINTMODE
+    printArray(A, lo, hi);
+    #endif
+}
+
 void quicksort(long *array,int left,int right){
     if(left<right){
         #ifdef PARALLEL
