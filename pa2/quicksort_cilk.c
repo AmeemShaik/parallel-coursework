@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <cilk/cilk.h>
@@ -33,6 +34,12 @@ void printArray(long *A, int lo, int hi){
         }
     }
     printf("]\n");
+}
+
+void dbg_printArray(long *A, int lo, int hi) {
+    #ifdef PRINTMODE
+    printArray(A, lo, hi);
+    #endif
 }
 
 /* Inclusive, in-place parallel prefix sum. 
@@ -94,7 +101,7 @@ void quicksort_recursive(long *array,int left,int right, long* copyArray){
 
     int splitPoint = partition(array,left, right, copyArray);
     printf("partition done, returned splitpoint =%d\n", splitPoint);
-    printArray(array, left, right);
+    dbg_printArray(array, left, right);
     cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
     quicksort_recursive(array,splitPoint+1,right,copyArray);
     cilk_sync;
@@ -145,7 +152,7 @@ int partition(long *array, int left, int right, long* copyArray){
         printf("%ld ", (long)lt[i]);
     }
     printf("\n");
-    // printArray((long *) lt, 0, n-1);
+    // dbg_printArray((long *) lt, 0, n-1);
     printf("eq flags:\n");
     for(i=0; i < n; i++) {
         printf("%ld ", (long)eq[i]);
@@ -293,13 +300,13 @@ int main(int argc, char **argv) {
             array[i] = r;
             // array[i] = rand() % size*2;
         }
-            printf("Unsorted Array\n");
+        printf("Unsorted Array\n");
         printArray(array, 0, size-1);
     
         int left = 0;
         int right = size-1;
         quicksort(array, size);
-            printf("Sorted Array\n");
+        printf("Sorted Array\n");
         printArray(array, 0, size-1);
             return 0;
 }
