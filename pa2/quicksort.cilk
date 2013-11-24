@@ -233,7 +233,7 @@ int cilk_main(int argc, char **argv) {
     }
     int size = atoi(argv[1]);
     long *array;
-    array = malloc(size*sizeof(long));
+    array = new long[size];
     int i;
     srand(time(NULL));
     for(i = 0; i < size; i++){
