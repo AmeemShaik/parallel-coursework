@@ -170,17 +170,17 @@ int partition(long *array, int left, int right, long* copyArray){
     // Set flags in comparison flag arrays
     cilk_for (i = 0; i < n; i++) {
         if (array[left + i] < pivot) {
-            lt_flags[i] = 1;
-            eq_flags[i] = 0;
-            gt_flags[i] = 0;
+            lt_flags[left + i] = 1;
+            eq_flags[left + i] = 0;
+            gt_flags[left + i] = 0;
         } else if (array[left + i] == pivot) {
-            lt_flags[i] = 0;
-            eq_flags[i] = 1;
-            gt_flags[i] = 0;
+            lt_flags[left + i] = 0;
+            eq_flags[left + i] = 1;
+            gt_flags[left + i] = 0;
         } else {
-            lt_flags[i] = 0;
-            eq_flags[i] = 0;
-            gt_flags[i] = 1;
+            lt_flags[left + i] = 0;
+            eq_flags[left + i] = 0;
+            gt_flags[left + i] = 1;
         }
     }
 
