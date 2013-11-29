@@ -143,7 +143,6 @@ void quicksort_recursive(long *array,int left,int right, long* copyArray){
         dbg_printArray(array, left, right);
         cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
         quicksort_recursive(array,splitPoint+1,right,copyArray);
-        cilk_sync;
     }
 }
 
@@ -228,15 +227,18 @@ int main(int argc, char **argv) {
         dbg_printf("Incorrect number of arguments, expected 1 argument\n");
         return EXIT_FAILURE;
     }
+
     int size = atoi(argv[1]);
     long *array;
     array = malloc(size*sizeof(long));
     int i;
     srand(time(NULL));
+
     for(i = 0; i < size; i++){
         long r = size - i;
         array[i] = r;
     }
+
     dbg_printf("Unsorted Array\n");
     dbg_printArray(array, 0, size-1);
 
