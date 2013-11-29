@@ -52,22 +52,23 @@ void dbg_printArray(long *A, int lo, int hi) {
     printArray(A, lo, hi);
     #endif
 }
-
 /* Inclusive, in-place parallel prefix sum. 
     Takes an input X[1..n], n=2^k and produces
     an output S[1..n], a vector of prefix sums.
 */
-void parallel_prefix_sum(short int *X, int *S, int n, int k) {
+void parallel_prefix_sum(int *X, int *S, int n, int k) {
 
     int i, h;
 
     cilk_for(i = 1; i <= n; i++) {
-        S[i - 1] = X[i - 1];
+         S[i - 1] = X[i - 1];
+        // S[i] = X[i];
     }
 
     for(h = 1 ; h <= k ; h++) {
         cilk_for (i = 1; i <= ( n >> h) ; i++) {
             S[i * (1 << h) - 1] += S[(1 << h) * i - (1 << (h-1)) - 1];
+           // S[i * (1 << h)]  += S[(1 << h) * i - (1 << (h-1))];
         }
     }
 
@@ -75,12 +76,12 @@ void parallel_prefix_sum(short int *X, int *S, int n, int k) {
         cilk_for(i = 2; i <= (n >> (h-1)) ; i++){
             if (i % 2) {
                 S[i * (1 << (h-1)) -1] = S[i * (1 << (h-1)) - (1 << (h-1)) - 1] + S[i * (1 << (h-1)) -1];
+               // S[i * (1 << (h-1))] = S[i * (1 << (h-1)) - (1 << (h-1))] + S[i * (1 << (h-1))];
             }
         }
     }
 
 }
-
 void insertionSort(long *array, int left, int right) {
 
     int i, j, val;
@@ -108,9 +109,7 @@ void quicksort_recursive(long *array,int left,int right, long* copyArray){
         insertionSort(array, left, right);
         return;
     }
-
     int splitPoint = partition(array,left, right, copyArray);
-    dbg_printf("partition done, returned splitpoint =%d\n", splitPoint);
     dbg_printArray(array, left, right);
     cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
     quicksort_recursive(array,splitPoint+1,right,copyArray);
@@ -123,16 +122,18 @@ void quicksort(long *array, int size) {
 }
 
 int partition(long *array, int left, int right, long* copyArray){
-
     // Compute n, k for helper prefix sum
     int n = (right - left + 1),
         k = (int) log2(n),
         i;
-
     // Flag and index arrays
-    short int lt[n], eq[n], gt[n];
-    int lt_indices[n], eq_indices[n], gt_indices[n];
-
+    int *lt,*eq,*gt,*lt_indices,*eq_indices,*gt_indices;
+    lt = malloc(n*sizeof(int));
+    eq = malloc(n*sizeof(int));
+    gt = malloc(n*sizeof(int));
+    lt_indices = malloc(n*sizeof(int));
+    eq_indices = malloc(n*sizeof(int));
+    gt_indices = malloc(n*sizeof(int));
     // Get a random pivot
     i = random_int(left, right);
     long pivot = array[i];
@@ -173,18 +174,16 @@ int partition(long *array, int left, int right, long* copyArray){
         dbg_printf("%ld ", (long)gt[i]);
     }
     dbg_printf("\n");
-
     // Compute index mappings from the flag arrays and make them consecutive
     lt[0] += left;
-    parallel_prefix_sum(lt, lt_indices, n, k);
+    parallel_prefix_sum(lt, lt_indices, n,k);
     eq[0] += lt_indices[n-1];
-    parallel_prefix_sum(eq, eq_indices, n, k);
+    parallel_prefix_sum(eq, eq_indices, n,k);
     gt[0] += eq_indices[n-1];
-    parallel_prefix_sum(gt, gt_indices, n, k);
+    parallel_prefix_sum(gt, gt_indices, n,k);
     gt[0] -= eq_indices[n-1];
     eq[0] -= lt_indices[n-1];
     lt[0] -= left;
-
     dbg_printf("lt_indices:\n");
     for(i=0; i < n; i++) {
         dbg_printf("%ld ", (long)lt_indices[i]);
@@ -200,27 +199,24 @@ int partition(long *array, int left, int right, long* copyArray){
         dbg_printf("%ld ", (long)gt_indices[i]);
     }
     dbg_printf("\n");
-
     // Now use these mappings to swap in parallel
     cilk_for (i = left; i <= right; i++) {
         if ( lt[i - left] ) {
-            copyArray[lt_indices[i-left] - 1] = array[i];
+            copyArray[lt_indices[i-left]] = array[i];
         } else if ( eq [i - left] ) {
-            copyArray[eq_indices[i-left] - 1] = array[i];
+            copyArray[eq_indices[i-left]] = array[i];
         } else{
-            copyArray[gt_indices[i-left] - 1] = array[i];
+            copyArray[gt_indices[i-left]] = array[i];
         }
     }
-
     cilk_for (i = left; i <= right; i++) {
         array[i] = copyArray[i];
     }
-
     return eq_indices[n-1] - 1;
 
 }
 
-int partition_bad(long *array, int left, int right, long* copyArray){
+/*int partition_bad(long *array, int left, int right, long* copyArray){
     
     dbg_printf("============================================\n");
     dbg_printf("partition(array, %d, %d)\n", left, right);
@@ -229,7 +225,7 @@ int partition_bad(long *array, int left, int right, long* copyArray){
     int k = (int) log2(n);
 
     // Flag arrays for less than, greater than, equal to.
-    short int lt[n],
+    int lt[n],
               eq[n],
               gt[n];
 
@@ -293,7 +289,7 @@ int partition_bad(long *array, int left, int right, long* copyArray){
     return eq_index_max - 1;
 
 }
-
+*/
 int main(int argc, char **argv) {
 
     clock_t start, stop;
