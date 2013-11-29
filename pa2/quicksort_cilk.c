@@ -101,6 +101,7 @@ void serial_quicksort(long *array,int left,int right){
         serial_quicksort(array,splitPoint+1,right);
     }
 }
+
 int serial_partition(long *array,int left,int right){
     long temp;
     long pivot = array[right];
@@ -133,15 +134,17 @@ void quicksort_recursive(long *array,int left,int right, long* copyArray){
     }
 
     // Then if we've degraded to serial quicksort
-    if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
+    else if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
         return serial_quicksort(array, left, right);
     }
 
-    int splitPoint = partition(array,left, right, copyArray);
-    dbg_printArray(array, left, right);
-    cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
-    quicksort_recursive(array,splitPoint+1,right,copyArray);
-    cilk_sync;
+    else {
+        int splitPoint = partition(array,left, right, copyArray);
+        dbg_printArray(array, left, right);
+        cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
+        quicksort_recursive(array,splitPoint+1,right,copyArray);
+        cilk_sync;
+    }
 }
 
 void quicksort(long *array, int size) {
@@ -150,10 +153,12 @@ void quicksort(long *array, int size) {
 }
 
 int partition(long *array, int left, int right, long* copyArray){
+
     // Compute n, k for helper prefix sum
     int n = (right - left + 1),
         k = (int) log2(n),
         i;
+
     // Flag and index arrays
     int *lt,*eq,*gt,*lt_indices,*eq_indices,*gt_indices;
     lt = malloc(n*sizeof(int));
@@ -162,12 +167,12 @@ int partition(long *array, int left, int right, long* copyArray){
     lt_indices = malloc(n*sizeof(int));
     eq_indices = malloc(n*sizeof(int));
     gt_indices = malloc(n*sizeof(int));
+
     // Get a random pivot
     i = random_int(left, right);
     long pivot = array[i];
     array[i] = array[right];
     array[right] = pivot;
-    dbg_printf("pivot = %ld\n", pivot);
 
     // Set flags in comparison flag arrays
     cilk_for (i = 0; i < n; i++) {
@@ -186,22 +191,6 @@ int partition(long *array, int left, int right, long* copyArray){
         }
     }
 
-    dbg_printf("lt flags:\n");
-    for(i=0; i < n; i++) {
-        dbg_printf("%ld ", (long)lt[i]);
-    }
-    dbg_printf("\n");
-    // dbg_printArray((long *) lt, 0, n-1);
-    dbg_printf("eq flags:\n");
-    for(i=0; i < n; i++) {
-        dbg_printf("%ld ", (long)eq[i]);
-    }
-    dbg_printf("\n");
-    dbg_printf("gt flags:\n");
-    for(i=0; i < n; i++) {
-        dbg_printf("%ld ", (long)gt[i]);
-    }
-    dbg_printf("\n");
     // Compute index mappings from the flag arrays and make them consecutive
     lt[0] += left;
     parallel_prefix_sum(lt, lt_indices, n,k);
@@ -212,21 +201,7 @@ int partition(long *array, int left, int right, long* copyArray){
     gt[0] -= eq_indices[n-1];
     eq[0] -= lt_indices[n-1];
     lt[0] -= left;
-    dbg_printf("lt_indices:\n");
-    for(i=0; i < n; i++) {
-        dbg_printf("%ld ", (long)lt_indices[i]);
-    }
-    dbg_printf("\n");
-    dbg_printf("eq_indices:\n");
-    for(i=0; i < n; i++) {
-        dbg_printf("%ld ", (long)eq_indices[i]);
-    }
-    dbg_printf("\n");
-    dbg_printf("gt_indices:\n");
-    for(i=0; i < n; i++) {
-        dbg_printf("%ld ", (long)gt_indices[i]);
-    }
-    dbg_printf("\n");
+
     // Now use these mappings to swap in parallel
     cilk_for (i = left; i <= right; i++) {
         if ( lt[i - left] ) {
