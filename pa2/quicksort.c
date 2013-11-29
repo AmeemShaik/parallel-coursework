@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <omp.h>
 
 #define LOWLIMIT 100000
 
@@ -37,19 +36,7 @@ int main(int argc, char **argv)
     int left = 0;
     int right = size-1;
     start = clock();
-    #ifdef PARALLEL
-    {
-        #pragma omp parallel
-        {
-            #pragma omp single
-            quicksort(array, left, right); 
-        }
-    }
-    #else
-    {
-        quicksort(array, left, right);
-    }
-    #endif
+    quicksort(array, left, right);
     stop = clock();
     time_elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
 
@@ -82,31 +69,9 @@ void dbg_printArray(long *A, int lo, int hi) {
 
 void quicksort(long *array,int left,int right){
     if(left<right){
-        #ifdef PARALLEL
-        int splitPoint = partition(array,left, right);
-        if(splitPoint-left>LOWLIMIT)
-        {
-            #pragma omp task
-            quicksort(array,left,splitPoint-1);
-        }
-        else
-        {
-            quicksort(array,left,splitPoint-1);
-        }
-        if(right-splitPoint>LOWLIMIT)
-        {
-            #pragma omp task
-            quicksort(array,splitPoint+1,right); 
-        }
-        else
-        { 
-            quicksort(array,splitPoint+1,right);
-        }
-        #else
         int splitPoint = partition(array,left, right);
         quicksort(array,left,splitPoint-1);
         quicksort(array,splitPoint+1,right);
-        #endif
     }
 }
 int partition(long *array,int left,int right){
