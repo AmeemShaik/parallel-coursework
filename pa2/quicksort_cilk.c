@@ -10,9 +10,6 @@
 #define SERIAL_INSERTION_NSIZE 16
 #define SERIAL_QUICKSORT_NSIZE 1024
 
-short *lt_flags, *eq_flags, *gt_flags;
-int *lt_indices, *eq_indices, *gt_indices;
-
 void dbg_printf(const char *fmt, ...)
 {
     #ifdef PRINTMODE
@@ -60,24 +57,24 @@ void dbg_printArray(long *A, int lo, int hi) {
     Takes an input X[1..n], n=2^k and produces
     an output S[1..n], a vector of prefix sums.
 */
-void parallel_prefix_sum(short *X, int *S, int left, int n, int k) {
+void parallel_prefix_sum(int *X, int *S, int n, int k) {
 
     int i, h;
 
     cilk_for(i = 1; i <= n; i++) {
-         S[left + i - 1] = X[left + i - 1];
+         S[i - 1] = X[i - 1];
     }
 
     for(h = 1 ; h <= k ; h++) {
         cilk_for (i = 1; i <= ( n >> h) ; i++) {
-            S[left + i * (1 << h) - 1] += S[left + (1 << h) * i - (1 << (h-1)) - 1];
+            S[i * (1 << h) - 1] += S[(1 << h) * i - (1 << (h-1)) - 1];
         }
     }
 
     for (h = k ; h >= 1; h--) {
         cilk_for(i = 2; i <= (n >> (h-1)) ; i++){
             if (i % 2) {
-                S[left + i * (1 << (h-1)) -1] = S[left + i * (1 << (h-1)) - (1 << (h-1)) - 1] + S[left + i * (1 << (h-1)) -1];
+                S[i * (1 << (h-1)) -1] = S[i * (1 << (h-1)) - (1 << (h-1)) - 1] + S[i * (1 << (h-1)) -1];
             }
         }
     }
@@ -161,6 +158,15 @@ int partition(long *array, int left, int right, long* copyArray){
         k = (int) log2(n),
         i;
 
+    // Flag and index arrays
+    int *lt,*eq,*gt,*lt_indices,*eq_indices,*gt_indices;
+    lt = malloc(n*sizeof(int));
+    eq = malloc(n*sizeof(int));
+    gt = malloc(n*sizeof(int));
+    lt_indices = malloc(n*sizeof(int));
+    eq_indices = malloc(n*sizeof(int));
+    gt_indices = malloc(n*sizeof(int));
+
     // Get a random pivot
     i = random_int(left, right);
     long pivot = array[i];
@@ -170,36 +176,36 @@ int partition(long *array, int left, int right, long* copyArray){
     // Set flags in comparison flag arrays
     cilk_for (i = 0; i < n; i++) {
         if (array[left + i] < pivot) {
-            lt_flags[left + i] = 1;
-            eq_flags[left + i] = 0;
-            gt_flags[left + i] = 0;
+            lt[i] = 1;
+            eq[i] = 0;
+            gt[i] = 0;
         } else if (array[left + i] == pivot) {
-            lt_flags[left + i] = 0;
-            eq_flags[left + i] = 1;
-            gt_flags[left + i] = 0;
+            lt[i] = 0;
+            eq[i] = 1;
+            gt[i] = 0;
         } else {
-            lt_flags[left + i] = 0;
-            eq_flags[left + i] = 0;
-            gt_flags[left + i] = 1;
+            lt[i] = 0;
+            eq[i] = 0;
+            gt[i] = 1;
         }
     }
 
     // Compute index mappings from the flag arrays and make them consecutive
-    lt_flags[left] += left;
-    parallel_prefix_sum(lt_flags, lt_indices, left, n, k);
-    eq_flags[left] += lt_indices[left + n-1];
-    parallel_prefix_sum(eq_flags, eq_indices, left, n, k);
-    gt_flags[left] += eq_indices[left + n-1];
-    parallel_prefix_sum(gt_flags, gt_indices, left, n, k);
-    gt_flags[left] -= eq_indices[left + n-1];
-    eq_flags[left] -= lt_indices[left + n-1];
-    lt_flags[left] -= left;
+    lt[0] += left;
+    parallel_prefix_sum(lt, lt_indices, n,k);
+    eq[0] += lt_indices[n-1];
+    parallel_prefix_sum(eq, eq_indices, n,k);
+    gt[0] += eq_indices[n-1];
+    parallel_prefix_sum(gt, gt_indices, n,k);
+    gt[0] -= eq_indices[n-1];
+    eq[0] -= lt_indices[n-1];
+    lt[0] -= left;
 
     // Now use these mappings to swap in parallel
     cilk_for (i = left; i <= right; i++) {
-        if ( lt_flags[i - left] ) {
+        if ( lt[i - left] ) {
             copyArray[lt_indices[i-left]] = array[i];
-        } else if ( eq_flags [i - left] ) {
+        } else if ( eq [i - left] ) {
             copyArray[eq_indices[i-left]] = array[i];
         } else{
             copyArray[gt_indices[i-left]] = array[i];
@@ -225,15 +231,6 @@ int main(int argc, char **argv) {
     int size = atoi(argv[1]);
     long *array;
     array = malloc(size*sizeof(long));
-
-    lt_flags = (short *) malloc (sizeof(short) * size);
-    eq_flags = (short *) malloc (sizeof(short) * size);
-    gt_flags = (short *) malloc (sizeof(short) * size);
-
-    lt_indices = (int *) malloc (sizeof(int) * size);
-    eq_indices = (int *) malloc (sizeof(int) * size);
-    gt_indices = (int *) malloc (sizeof(int) * size);
-
     int i;
     srand(time(NULL));
 
@@ -255,5 +252,3 @@ int main(int argc, char **argv) {
     printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
     return 0;
 }
-
-
