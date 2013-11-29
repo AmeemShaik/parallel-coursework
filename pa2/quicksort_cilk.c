@@ -187,12 +187,12 @@ int partition(long *array, int left, int right, long* copyArray){
     // Compute index mappings from the flag arrays and make them consecutive
     lt_flags[left] += left;
     parallel_prefix_sum(lt_flags, lt_indices, left, n, k);
-    eq_flags[left] += lt_indices[n-1];
+    eq_flags[left] += lt_indices[left + n-1];
     parallel_prefix_sum(eq_flags, eq_indices, left, n, k);
-    gt_flags[left] += eq_indices[n-1];
+    gt_flags[left] += eq_indices[left + n-1];
     parallel_prefix_sum(gt_flags, gt_indices, left, n, k);
-    gt_flags[left] -= eq_indices[n-1];
-    eq_flags[left] -= lt_indices[n-1];
+    gt_flags[left] -= eq_indices[left + n-1];
+    eq_flags[left] -= lt_indices[left + n-1];
     lt_flags[left] -= left;
 
     // Now use these mappings to swap in parallel
