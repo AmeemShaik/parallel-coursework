@@ -7,8 +7,15 @@
 #include <cilk/cilk_api.h>
 
 // Array size at which to degrade to insertion sort.
-#define SERIAL_INSERTION_NSIZE 16
-#define SERIAL_QUICKSORT_NSIZE 1024
+#define SERIAL_INSERTION_NSIZE -1
+#define SERIAL_QUICKSORT_NSIZE -1
+
+short* lt_flags;
+short* eq_flags;
+short* gt_flags;
+int* lt_indices;
+int* eq_indices;
+int* gt_indices;
 
 void dbg_printf(const char *fmt, ...)
 {
@@ -57,24 +64,24 @@ void dbg_printArray(long *A, int lo, int hi) {
     Takes an input X[1..n], n=2^k and produces
     an output S[1..n], a vector of prefix sums.
 */
-void parallel_prefix_sum(int *X, int *S, int n, int k) {
+void parallel_prefix_sum(short *X, int *S, int left, int n, int k) {
 
     int i, h;
 
-    cilk_for(i = 1; i <= n; i++) {
-         S[i - 1] = X[i - 1];
+    cilk_for(i = left; i < left+n; i++) {
+         S[i] = X[i];
     }
 
     for(h = 1 ; h <= k ; h++) {
-        cilk_for (i = 1; i <= ( n >> h) ; i++) {
-            S[i * (1 << h) - 1] += S[(1 << h) * i - (1 << (h-1)) - 1];
+        cilk_for (i = 1; i <= (n >> h) ; i++) {
+            S[left + i * (1 << h) - 1] += S[left + (1 << h) * i - (1 << (h-1)) - 1];
         }
     }
 
     for (h = k ; h >= 1; h--) {
         cilk_for(i = 2; i <= (n >> (h-1)) ; i++){
             if (i % 2) {
-                S[i * (1 << (h-1)) -1] = S[i * (1 << (h-1)) - (1 << (h-1)) - 1] + S[i * (1 << (h-1)) -1];
+                S[left + i * (1 << (h-1)) -1] += S[left + i * (1 << (h-1)) - (1 << (h-1)) - 1];
             }
         }
     }
@@ -94,14 +101,6 @@ void serial_insertionSort(long *array, int left, int right) {
     }
 }
 
-void serial_quicksort(long *array,int left,int right){
-    if(left<right){
-        int splitPoint = serial_partition(array,left, right);
-        serial_quicksort(array,left,splitPoint-1);
-        serial_quicksort(array,splitPoint+1,right);
-    }
-}
-
 int serial_partition(long *array,int left,int right){
     long temp;
     long pivot = array[right];
@@ -118,6 +117,14 @@ int serial_partition(long *array,int left,int right){
     array[right] = array[i+1];     
     array[i+1]=pivot;
     return i+1;
+}
+
+void serial_quicksort(long *array,int left,int right){
+    if(left<right){
+        int splitPoint = serial_partition(array,left, right);
+        serial_quicksort(array,left,splitPoint-1);
+        serial_quicksort(array,splitPoint+1,right);
+    }
 }
 
 void quicksort_recursive(long *array,int left,int right, long* copyArray){
@@ -153,19 +160,12 @@ void quicksort(long *array, int size) {
 
 int partition(long *array, int left, int right, long* copyArray){
 
+    printf("partition(array, left=%d, right=%d)\n", left, right);
+
     // Compute n, k for helper prefix sum
     int n = (right - left + 1),
         k = (int) log2(n),
         i;
-
-    // Flag and index arrays
-    int *lt,*eq,*gt,*lt_indices,*eq_indices,*gt_indices;
-    lt = malloc(n*sizeof(int));
-    eq = malloc(n*sizeof(int));
-    gt = malloc(n*sizeof(int));
-    lt_indices = malloc(n*sizeof(int));
-    eq_indices = malloc(n*sizeof(int));
-    gt_indices = malloc(n*sizeof(int));
 
     // Get a random pivot
     i = random_int(left, right);
@@ -173,39 +173,48 @@ int partition(long *array, int left, int right, long* copyArray){
     array[i] = array[right];
     array[right] = pivot;
 
+    printf("starting to mark flags\n");
+
     // Set flags in comparison flag arrays
-    cilk_for (i = 0; i < n; i++) {
-        if (array[left + i] < pivot) {
-            lt[i] = 1;
-            eq[i] = 0;
-            gt[i] = 0;
-        } else if (array[left + i] == pivot) {
-            lt[i] = 0;
-            eq[i] = 1;
-            gt[i] = 0;
+    cilk_for (i = left; i <= right; i++) {
+        printf("i=%d\n");
+        printf("array[i] = %d\n", array[i]);
+        if (array[i] < pivot) {
+            lt_flags[i] = 1;
+            eq_flags[i] = 0;
+            gt_flags[i] = 0;
+        } else if (array[i] == pivot) {
+            lt_flags[i] = 0;
+            eq_flags[i] = 1;
+            gt_flags[i] = 0;
         } else {
-            lt[i] = 0;
-            eq[i] = 0;
-            gt[i] = 1;
+            lt_flags[i] = 0;
+            eq_flags[i] = 0;
+            gt_flags[i] = 1;
         }
     }
+    printf("finished marking flags\n");
 
     // Compute index mappings from the flag arrays and make them consecutive
-    lt[0] += left;
-    parallel_prefix_sum(lt, lt_indices, n,k);
-    eq[0] += lt_indices[n-1];
-    parallel_prefix_sum(eq, eq_indices, n,k);
-    gt[0] += eq_indices[n-1];
-    parallel_prefix_sum(gt, gt_indices, n,k);
-    gt[0] -= eq_indices[n-1];
-    eq[0] -= lt_indices[n-1];
-    lt[0] -= left;
+    lt_flags[0] += left;
+    printf("starting lt prefix\n");
+    parallel_prefix_sum(lt_flags, lt_indices, 0, n, k);
+    printf("lt prefix done\n");
+    eq_flags[0] += lt_indices[n-1];
+    parallel_prefix_sum(eq_flags, eq_indices, 0, n, k);
+    printf("eq prefix done\n");
+    gt_flags[0] += eq_indices[n-1];
+    parallel_prefix_sum(gt_flags, gt_indices, 0, n, k);
+    printf("gt prefix done\n");
+    gt_flags[0] -= eq_indices[n-1];
+    eq_flags[0] -= lt_indices[n-1];
+    lt_flags[0] -= left;
 
     // Now use these mappings to swap in parallel
     cilk_for (i = left; i <= right; i++) {
-        if ( lt[i - left] ) {
+        if ( lt_flags[i - left] ) {
             copyArray[lt_indices[i-left]] = array[i];
-        } else if ( eq [i - left] ) {
+        } else if ( eq_flags [i - left] ) {
             copyArray[eq_indices[i-left]] = array[i];
         } else{
             copyArray[gt_indices[i-left]] = array[i];
@@ -229,14 +238,21 @@ int main(int argc, char **argv) {
     }
 
     int size = atoi(argv[1]);
-    long *array;
-    array = malloc(size*sizeof(long));
+    printf("size=%d\n", size);
+
+    long *array     = malloc(size * sizeof(long));
+    lt_flags = malloc(size * sizeof(short));
+    eq_flags = malloc(size * sizeof(short));
+    gt_flags = malloc(size * sizeof(short));
+    lt_indices = malloc(size * sizeof(int));
+    eq_indices = malloc(size * sizeof(int));
+    gt_indices = malloc(size * sizeof(int));
+
     int i;
     srand(time(NULL));
 
     for(i = 0; i < size; i++){
-        long r = size - i;
-        array[i] = r;
+        array[i] = (long) rand() * (size / 2) / RAND_MAX;
     }
 
     dbg_printf("Unsorted Array\n");
