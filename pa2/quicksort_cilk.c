@@ -241,7 +241,6 @@ int main(int argc, char **argv) {
 
     dbg_printf("Sorted Array\n");
     dbg_printArray(array, 0, size-1);
-    free(array);
     printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
     return 0;
 }
