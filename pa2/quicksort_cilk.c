@@ -94,14 +94,6 @@ void serial_insertionSort(long *array, int left, int right) {
     }
 }
 
-void serial_quicksort(long *array,int left,int right){
-    if(left<right){
-        int splitPoint = serial_partition(array,left, right);
-        serial_quicksort(array,left,splitPoint-1);
-        serial_quicksort(array,splitPoint+1,right);
-    }
-}
-
 int serial_partition(long *array,int left,int right){
     long temp;
     long pivot = array[right];
@@ -120,35 +112,12 @@ int serial_partition(long *array,int left,int right){
     return i+1;
 }
 
-void quicksort_recursive(long *array,int left,int right, long* copyArray){
-
-    dbg_printf("quicksort(array, %d, %d)\n", left, right);
-
-    if(left >= right) {
-        return;
+void serial_quicksort(long *array,int left,int right){
+    if(left<right){
+        int splitPoint = serial_partition(array,left, right);
+        serial_quicksort(array,left,splitPoint-1);
+        serial_quicksort(array,splitPoint+1,right);
     }
-
-    // First see if we've degraded to serial insertion sort.
-    if (right - left + 1 < SERIAL_INSERTION_NSIZE) {
-        return serial_insertionSort(array, left, right);
-    }
-
-    // Then if we've degraded to serial quicksort
-    else if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
-        return serial_quicksort(array, left, right);
-    }
-
-    else {
-        int splitPoint = partition(array,left, right, copyArray);
-        dbg_printArray(array, left, right);
-        cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
-        quicksort_recursive(array,splitPoint+1,right,copyArray);
-    }
-}
-
-void quicksort(long *array, int size) {
-    long *copyArray = (long *) malloc (sizeof(long) * size);
-    quicksort_recursive(array, 0, size-1, copyArray);
 }
 
 int partition(long *array, int left, int right, long* copyArray){
@@ -217,6 +186,38 @@ int partition(long *array, int left, int right, long* copyArray){
     return eq_indices[n-1] - 1;
 
 }
+
+void quicksort_recursive(long *array,int left,int right, long* copyArray){
+
+    dbg_printf("quicksort(array, %d, %d)\n", left, right);
+
+    if(left >= right) {
+        return;
+    }
+
+    // First see if we've degraded to serial insertion sort.
+    if (right - left + 1 < SERIAL_INSERTION_NSIZE) {
+        return serial_insertionSort(array, left, right);
+    }
+
+    // Then if we've degraded to serial quicksort
+    else if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
+        return serial_quicksort(array, left, right);
+    }
+
+    else {
+        int splitPoint = partition(array,left, right, copyArray);
+        dbg_printArray(array, left, right);
+        cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
+        quicksort_recursive(array,splitPoint+1,right,copyArray);
+    }
+}
+
+void quicksort(long *array, int size) {
+    long *copyArray = (long *) malloc (sizeof(long) * size);
+    quicksort_recursive(array, 0, size-1, copyArray);
+}
+
 
 int main(int argc, char **argv) {
 
