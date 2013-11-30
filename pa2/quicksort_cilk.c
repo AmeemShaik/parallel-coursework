@@ -7,9 +7,9 @@
 #include <cilk/cilk_api.h>
 
 // Array size at which to degrade to insertion sort.
-#define SERIAL_INSERTION_NSIZE 16
-#define SERIAL_QUICKSORT_NSIZE 512
-long *lt,*gt;
+#define SERIAL_INSERTION_NSIZE 750
+#define SERIAL_QUICKSORT_NSIZE 2000
+long *lt,*gt,*copyArray;
 
 void dbg_printf(const char *fmt, ...)
 {
@@ -124,42 +124,42 @@ void serial_quicksort(long *array,int left,int right){
     }
 }
 
-void quicksort_recursive(long *array,int left,int right, long* copyArray){
+void quicksort_recursive(long *array,int left,int right){
 
-    dbg_printf("quicksort(array, %d, %d)\n", left, right);
+   // dbg_printf("quicksort(array, %d, %d)\n", left, right);
 
     if(left >= right) {
         return;
     }
 
-    // First see if we've degraded to serial insertion sort.
+    //First see if we've degraded to serial insertion sort.
     if (right - left + 1 < SERIAL_INSERTION_NSIZE) {
         return serial_insertionSort(array, left, right);
     }
-
-    // Then if we've degraded to serial quicksort
-    else if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
-        return serial_quicksort(array, left, right);
-    }
-
     else {
-        int splitPoint = partition(array,left, right,copyArray);
-        dbg_printArray(array, left, right);
-        cilk_spawn quicksort_recursive(array,left,splitPoint-1,copyArray);
-        quicksort_recursive(array,splitPoint+1,right,copyArray);
+       // int  splitPoint = partition(array,left, right,copyArray);
+        int splitPoint;
+        if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
+            splitPoint = serial_partition(array,left, right);
+        }
+        else{
+            splitPoint = partition(array,left, right,copyArray);
+        }
+      //  dbg_printArray(array, left, right);
+        cilk_spawn quicksort_recursive(array,left,splitPoint-1);
+        quicksort_recursive(array,splitPoint+1,right);
        // cilk_sync;
     }
 }
 
 void quicksort(long *array, int size) {
-    long *copyArray = (long *) malloc (sizeof(long) * size);
+    copyArray = (long *) malloc (sizeof(long) * size);
     lt = (long *) malloc (sizeof(long) * size);
     gt = (long *) malloc (sizeof(long) * size);
-    quicksort_recursive(array, 0, size-1, copyArray);
-   // printArray(array,0,size-1);
+    quicksort_recursive(array, 0, size-1);
 }
 
-int partition(long *array, int left, int right, long *copyArray){
+int partition(long *array, int left, int right){
     // Compute n, k for helper prefix sum
     int n = (right - left + 1),
         k = (int) log2(n),
@@ -191,8 +191,10 @@ int partition(long *array, int left, int right, long *copyArray){
             gt[i]=0;
         }
     }
-    parallel_prefix_sum(lt, left, n,k);
-    parallel_prefix_sum(gt, left, n,k);
+   // parallel_prefix_sum(lt, left, n,k);
+   // parallel_prefix_sum(gt, left, n,k);
+    serial_prefix_sum(lt,left,n);
+    serial_prefix_sum(gt,left,n);
     int pivotIndex = left+lt[right];
     //add the pivot
     array[pivotIndex] = pivot;
@@ -224,9 +226,9 @@ int main(int argc, char **argv) {
     array = malloc(size*sizeof(long));
     int i;
     srand(time(NULL));
-
+    
     for(i = 0; i < size; i++){
-        long r = size-i;
+        long r = rand()%size;
         array[i] = r;
     }
 
@@ -239,6 +241,7 @@ int main(int argc, char **argv) {
 
     dbg_printf("Sorted Array\n");
     dbg_printArray(array, 0, size-1);
+    free(array);
     printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
     return 0;
 }
