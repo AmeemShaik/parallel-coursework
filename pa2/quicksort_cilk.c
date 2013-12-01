@@ -10,6 +10,11 @@
 #define SERIAL_INSERTION_NSIZE 32
 int SERIAL_QUICKSORT_NSIZE = 2048;
 
+double log2( double n )  
+{  
+    return log( n ) / log( 2 );  
+}
+
 typedef struct{
     int lte;
     int gt;
