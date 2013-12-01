@@ -9,7 +9,17 @@
 // Array size at which to degrade to insertion sort.
 #define SERIAL_INSERTION_NSIZE 750
 #define SERIAL_QUICKSORT_NSIZE 2000
-long *lt,*gt,*copyArray;
+
+typedef struct{
+    int lte;
+    int gt;
+} lte_gt;
+
+lte_gt *flags;
+long *copyArray;    
+
+// Cilk constant: # workers
+int WORKERS;
 
 void dbg_printf(const char *fmt, ...)
 {
@@ -58,19 +68,21 @@ void dbg_printArray(long *A, int lo, int hi) {
     Takes an input X[1..n], n=2^k and produces
     an output S[1..n], a vector of prefix sums.
 */
-void parallel_prefix_sum(long *S, int left, int n, int k) {
+void parallel_prefix_sum(lte_gt *S, int left, int n, int k) {
 
     int i, h;
     for(h = 1 ; h <= k ; h++) {
         cilk_for (i = 1; i <= (n >> h); i++) {
-            S[left+i * (1 << h) - 1] += S[left+(1 << h) * i - (1 << (h-1)) - 1];
+            S[left+i * (1 << h) - 1].lte += S[left+(1 << h) * i - (1 << (h-1)) - 1].lte;
+            S[left+i * (1 << h) - 1].gt += S[left+(1 << h) * i - (1 << (h-1)) - 1].gt;
         }
     }
 
     for (h = k ; h >= 1; h--) {
         cilk_for(i = 2; i <= (n >> (h-1)); i++){
             if (i % 2) {
-                S[left+i * (1 << (h-1)) -1] = S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1] + S[left+i * (1 << (h-1)) -1];
+                S[left+i * (1 << (h-1)) -1].lte = S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].lte + S[left+i * (1 << (h-1)) -1].lte;
+                S[left+i * (1 << (h-1)) -1].gt = S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].gt + S[left+i * (1 << (h-1)) -1].gt;
             }
         }
     }
@@ -148,14 +160,12 @@ void quicksort_recursive(long *array,int left,int right){
       //  dbg_printArray(array, left, right);
         cilk_spawn quicksort_recursive(array,left,splitPoint-1);
         quicksort_recursive(array,splitPoint+1,right);
-       // cilk_sync;
     }
 }
 
 void quicksort(long *array, int size) {
     copyArray = (long *) malloc (sizeof(long) * size);
-    lt = (long *) malloc (sizeof(long) * size);
-    gt = (long *) malloc (sizeof(long) * size);
+    flags = (lte_gt *) malloc (sizeof(lte_gt) * size);
     quicksort_recursive(array, 0, size-1);
 }
 
@@ -175,37 +185,36 @@ int partition(long *array, int left, int right){
     cilk_for (i = left; i <= right; i++) {
         copyArray[i] = array[i];
         if (array[i] < pivot) {
-            lt[i] = 1;
-            gt[i] = 0;
+            flags[i].lte = 1;
+            flags[i].gt = 0;
         } else if(array[i]>pivot) {
-            lt[i] = 0;
-            gt[i] = 1;
+            flags[i].lte = 0;
+            flags[i].gt = 1;
         }
         else{
             if(i==right){
-                lt[i]=0;
+                flags[i].lte=0;
             }
             else {
-                lt[i]=1;
+                flags[i].lte=1;
             }
-            gt[i]=0;
+            flags[i].gt=0;
         }
     }
-   // parallel_prefix_sum(lt, left, n,k);
-   // parallel_prefix_sum(gt, left, n,k);
-    serial_prefix_sum(lt,left,n);
-    serial_prefix_sum(gt,left,n);
-    int pivotIndex = left+lt[right];
+   parallel_prefix_sum(flags, left, n,k);
+    // serial_prefix_sum(lt,left,n);
+    // serial_prefix_sum(gt,left,n);
+    int pivotIndex = left+flags[right].lte;
     //add the pivot
     array[pivotIndex] = pivot;
     // Now use these mappings to swap in parallel
     // Note, we don't look at i = right, since its the pivot
     cilk_for (i = left; i < right; i++){
         if(copyArray[i]<=pivot){
-            array[left+lt[i]-1] = copyArray[i];
+            array[left+flags[i].lte-1] = copyArray[i];
         }
         else if (copyArray[i]>pivot){
-            array[pivotIndex+gt[i]] = copyArray[i];
+            array[pivotIndex+flags[i].gt] = copyArray[i];
         }
     }
     return pivotIndex;
@@ -221,6 +230,9 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    WORKERS = __cilkrts_get_nworkers(); 
+    printf("Using %d available workers.\n", WORKERS);
+
     int size = atoi(argv[1]);
     long *array;
     array = malloc(size*sizeof(long));
@@ -234,6 +246,7 @@ int main(int argc, char **argv) {
 
     dbg_printf("Unsorted Array\n");
     dbg_printArray(array, 0, size-1);
+
     start = clock();
     quicksort(array, size);
     stop = clock();
