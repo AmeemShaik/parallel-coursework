@@ -1,5 +1,77 @@
 ####   run quicksort with varied n, p  ####
 #BSUB -n 16 
 #BSUB –R “span[hosts=1]”
-./quicksort_cilk 30000000
+
+./quicksort 250000
+./quicksort_cilk 250000 2
+./quicksort_cilk 250000 4
+./quicksort_cilk 250000 8
+./quicksort_cilk 250000 10
+./quicksort_cilk 250000 12
+./quicksort_cilk 250000 16
+
+./quicksort 500000
+./quicksort_cilk 500000 2
+./quicksort_cilk 500000 4
+./quicksort_cilk 500000 8
+./quicksort_cilk 500000 10
+./quicksort_cilk 500000 12
+./quicksort_cilk 500000 16
+
+./quicksort 1000000
+./quicksort_cilk 1000000 2
+./quicksort_cilk 1000000 4
+./quicksort_cilk 1000000 8
+./quicksort_cilk 1000000 10
+./quicksort_cilk 1000000 12
+./quicksort_cilk 1000000 16
+
+./quicksort 2000000
+./quicksort_cilk 2000000 2
+./quicksort_cilk 2000000 4
+./quicksort_cilk 2000000 8
+./quicksort_cilk 2000000 10
+./quicksort_cilk 2000000 12
+./quicksort_cilk 2000000 16
+
+./quicksort 4000000
+./quicksort_cilk 4000000 2
+./quicksort_cilk 4000000 4
+./quicksort_cilk 4000000 8
+./quicksort_cilk 4000000 10
+./quicksort_cilk 4000000 12
+./quicksort_cilk 4000000 16
+
+./quicksort 8000000
+./quicksort_cilk 8000000 2
+./quicksort_cilk 8000000 4
+./quicksort_cilk 8000000 8
+./quicksort_cilk 8000000 10
+./quicksort_cilk 8000000 12
+./quicksort_cilk 8000000 16
+
+./quicksort 16000000
+./quicksort_cilk 16000000 2
+./quicksort_cilk 16000000 4
+./quicksort_cilk 16000000 8
+./quicksort_cilk 16000000 10
+./quicksort_cilk 16000000 12
+./quicksort_cilk 16000000 16
+
+./quicksort 32000000
+./quicksort_cilk 32000000 2
+./quicksort_cilk 32000000 4
+./quicksort_cilk 32000000 8
+./quicksort_cilk 32000000 10
+./quicksort_cilk 32000000 12
+./quicksort_cilk 32000000 16
+
+./quicksort 64000000
+./quicksort_cilk 64000000 2
+./quicksort_cilk 64000000 4
+./quicksort_cilk 64000000 8
+./quicksort_cilk 64000000 10
+./quicksort_cilk 64000000 12
+./quicksort_cilk 64000000 16
+
 ##### end of parallel quicksort ####
