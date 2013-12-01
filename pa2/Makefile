@@ -1,6 +1,6 @@
 all:
 
-	gcc quicksort.c -o quicksort
+	gcc -O3 quicksort.c -o quicksort -lm -std=c99
 
 	gcc -DPRINTMODE quicksort.c -o quicksortPrint
 
@@ -8,6 +8,6 @@ all:
 
 	gcc -fopenmp -DPARALLEL quicksort.c -o qParallel 
 
-	gcc quicksort_cilk.c -o quicksort_cilk -lcilkrts -ldl -fcilkplus
+	gcc -O3 quicksort_cilk.c -o quicksort_cilk -lcilkrts -ldl -lm -std=c99 -fcilkplus
 
 	gcc -DPRINTMODE quicksort_cilk.c -o quicksort_cilk_print -lcilkrts -ldl -fcilkplus

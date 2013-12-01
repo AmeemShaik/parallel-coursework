@@ -7,8 +7,8 @@
 #include <cilk/cilk_api.h>
 
 // Array size at which to degrade to insertion sort.
-#define SERIAL_INSERTION_NSIZE 16
-#define SERIAL_QUICKSORT_NSIZE 2048
+#define SERIAL_INSERTION_NSIZE 32
+int SERIAL_QUICKSORT_NSIZE = 2048;
 
 typedef struct{
     int lte;
@@ -81,8 +81,8 @@ void parallel_prefix_sum(lte_gt *S, int left, int n, int k) {
     for (h = k ; h >= 1; h--) {
         cilk_for(i = 2; i <= (n >> (h-1)); i++){
             if (i % 2) {
-                S[left+i * (1 << (h-1)) -1].lte = S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].lte + S[left+i * (1 << (h-1)) -1].lte;
-                S[left+i * (1 << (h-1)) -1].gt = S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].gt + S[left+i * (1 << (h-1)) -1].gt;
+                S[left+i * (1 << (h-1)) -1].lte += S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].lte;
+                S[left+i * (1 << (h-1)) -1].gt += S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].gt;
             }
         }
     }
@@ -126,47 +126,6 @@ int serial_partition(long *array,int left,int right){
     array[right] = array[i+1];     
     array[i+1]=pivot;
     return i+1;
-}
-
-void serial_quicksort(long *array,int left,int right){
-    if(left<right){
-        int splitPoint = serial_partition(array,left, right);
-        serial_quicksort(array,left,splitPoint-1);
-        serial_quicksort(array,splitPoint+1,right);
-    }
-}
-
-void quicksort_recursive(long *array,int left,int right){
-
-   // dbg_printf("quicksort(array, %d, %d)\n", left, right);
-
-    if(left >= right) {
-        return;
-    }
-
-    //First see if we've degraded to serial insertion sort.
-    if (right - left + 1 < SERIAL_INSERTION_NSIZE) {
-        return serial_insertionSort(array, left, right);
-    }
-    else {
-       // int  splitPoint = partition(array,left, right,copyArray);
-        int splitPoint;
-        if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
-            splitPoint = serial_partition(array,left, right);
-        }
-        else{
-            splitPoint = partition(array,left, right,copyArray);
-        }
-      //  dbg_printArray(array, left, right);
-        cilk_spawn quicksort_recursive(array,left,splitPoint-1);
-        quicksort_recursive(array,splitPoint+1,right);
-    }
-}
-
-void quicksort(long *array, int size) {
-    copyArray = (long *) malloc (sizeof(long) * size);
-    flags = (lte_gt *) malloc (sizeof(lte_gt) * size);
-    quicksort_recursive(array, 0, size-1);
 }
 
 int partition(long *array, int left, int right){
@@ -220,6 +179,49 @@ int partition(long *array, int left, int right){
     return pivotIndex;
 }
 
+void serial_quicksort(long *array,int left,int right){
+    if(left<right){
+        int splitPoint = serial_partition(array,left, right);
+        serial_quicksort(array,left,splitPoint-1);
+        serial_quicksort(array,splitPoint+1,right);
+    }
+}
+
+void quicksort_recursive(long *array,int left,int right){
+
+   // dbg_printf("quicksort(array, %d, %d)\n", left, right);
+
+    if(left >= right) {
+        return;
+    }
+
+    //First see if we've degraded to serial insertion sort.
+    if (right - left + 1 < SERIAL_INSERTION_NSIZE) {
+        return serial_insertionSort(array, left, right);
+    }
+    else {
+       // int  splitPoint = partition(array,left, right,copyArray);
+        int splitPoint;
+        if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
+            splitPoint = serial_partition(array,left, right);
+        }
+        else{
+            splitPoint = partition(array,left, right);
+        }
+      //  dbg_printArray(array, left, right);
+        cilk_spawn quicksort_recursive(array,left,splitPoint-1);
+        quicksort_recursive(array,splitPoint+1,right);
+    }
+}
+
+void quicksort(long *array, int size) {
+    copyArray = (long *) malloc (sizeof(long) * size);
+    flags = (lte_gt *) malloc (sizeof(lte_gt) * size);
+    quicksort_recursive(array, 0, size-1);
+}
+
+
+
 int main(int argc, char **argv) {
 
     clock_t start, stop;
@@ -239,6 +241,9 @@ int main(int argc, char **argv) {
     int i;
     srand(time(NULL));
     
+    SERIAL_QUICKSORT_NSIZE = size/8*WORKERS;
+    printf("Degrades to serial quicksort at size %d\n", SERIAL_QUICKSORT_NSIZE);
+
     for(i = 0; i < size; i++){
         long r = rand()%size;
         array[i] = r;
