@@ -8,7 +8,7 @@
 
 // Array size at which to degrade to insertion sort.
 #define SERIAL_INSERTION_NSIZE 32
-int SERIAL_QUICKSORT_NSIZE = 2048;
+#define SERIAL_QUICKSORT_NSIZE 2048
 
 double log2( double n )  
 {  
@@ -247,9 +247,6 @@ int main(int argc, char **argv) {
     array = malloc(size*sizeof(long));
     int i;
     srand(time(NULL));
-    
-    SERIAL_QUICKSORT_NSIZE = size/8*WORKERS;
-    printf("Degrades to serial quicksort at size %d\n", SERIAL_QUICKSORT_NSIZE);
 
     for(i = 0; i < size; i++){
         long r = rand()%size;
