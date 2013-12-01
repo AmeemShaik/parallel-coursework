@@ -1,4 +1,4 @@
-####   run parallel quicksort with p=16, n=30,000,000  ####
+####   run quicksort with varied n, p  ####
 #BSUB -n 16 
 #BSUB –R “span[hosts=1]”
 ./quicksort_cilk 30000000

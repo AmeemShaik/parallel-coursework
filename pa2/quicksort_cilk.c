@@ -232,12 +232,14 @@ int main(int argc, char **argv) {
     clock_t start, stop;
     double time_elapsed;
 
-    if(argc!=2){
+    if(argc < 2){
         dbg_printf("Incorrect number of arguments, expected 1 argument\n");
         return EXIT_FAILURE;
+    } else if (argc == 3) {
+        WORKERS = (atoi(argv[2]) < __cilkrts_get_nworkers()) ? atoi(argv[2]): __cilkrts_get_nworkers();
+    } else {
+        WORKERS =  __cilkrts_get_nworkers(); 
     }
-
-    WORKERS = __cilkrts_get_nworkers(); 
     printf("Using %d available workers.\n", WORKERS);
 
     int size = atoi(argv[1]);
