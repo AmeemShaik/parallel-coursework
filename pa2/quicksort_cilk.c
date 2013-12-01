@@ -7,8 +7,8 @@
 #include <cilk/cilk_api.h>
 
 // Array size at which to degrade to insertion sort.
-#define SERIAL_INSERTION_NSIZE 750
-#define SERIAL_QUICKSORT_NSIZE 2000
+#define SERIAL_INSERTION_NSIZE 16
+#define SERIAL_QUICKSORT_NSIZE 2048
 
 typedef struct{
     int lte;
