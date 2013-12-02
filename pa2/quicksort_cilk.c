@@ -151,7 +151,7 @@ int partition(long *array, int left, int right){
         i;
 
     // Get a random pivot
-    i = random_int(left, right);
+    i = random_int(left, right+1);
 
     int l, m, r;
     l = array[left];

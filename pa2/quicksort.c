@@ -18,6 +18,21 @@ double wctime() {
     return (tv.tv_sec + 1E-6 * tv.tv_usec);
 }
 
+// Random int from [low, high)
+long random_int (unsigned int low, unsigned int high)
+{
+  int random = rand();
+  if (RAND_MAX == random) return random_int(low, high);
+  int range = high - low,
+      remain = RAND_MAX % range,
+      slot = RAND_MAX / range;
+  if (random < RAND_MAX - remain) {
+    return low + random / slot;
+  } else {
+    return random_int (low, high);
+  }
+}
+
 int main(int argc, char **argv)
 {
 
@@ -33,10 +48,12 @@ int main(int argc, char **argv)
     array = malloc(size*sizeof(long));
     int i;
     srand(time(NULL));
+
     for(i = 0; i < size; i++){
-        long r = rand()%size;
+        long r = rand() % size;
         array[i] = r;
     }
+
     #ifdef PRINTMODE
     printf("Unsorted Array\n");
     printArray(array,0, size-1);
@@ -85,7 +102,7 @@ void quicksort(long *array,int left,int right){
 }
 int partition(long *array,int left,int right){
     long temp;
-    long pivot = array[right];
+    long pivot = array[random_int(left, right+1)];
     int i = left-1;
     int j;
     for(j=left; j<right;j++){
