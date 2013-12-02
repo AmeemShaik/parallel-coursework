@@ -151,7 +151,7 @@ int partition(long *array, int left, int right){
         i;
 
     // Get a random pivot
-    // i = random_int(left, right);
+    i = random_int(left, right);
 
     int l, m, r;
     l = array[left];
@@ -159,37 +159,37 @@ int partition(long *array, int left, int right){
     r = array[right];
 
     // Pick an appropriate pivot based on 3-sample
-    int min, max;
-    min = (l < m) ? l : m;
-    min = (min < r) ? min : r;
-    max = (l > m) ? l : m;
-    max = (max > r) ? max : r;
+    // int min, max;
+    // min = (l < m) ? l : m;
+    // min = (min < r) ? min : r;
+    // max = (l > m) ? l : m;
+    // max = (max > r) ? max : r;
 
-    if ( l == min) {
+    // if ( l == min) {
 
-        if ( m == max) {
-            i = r;
-        } else {
-            i = m;
-        }
+    //     if ( m == max) {
+    //         i = r;
+    //     } else {
+    //         i = m;
+    //     }
 
-    } else if ( r == min) {
+    // } else if ( r == min) {
 
-        if ( l == max ) {
-            i = m;
-        } else {
-            i = l;
-        }
+    //     if ( l == max ) {
+    //         i = m;
+    //     } else {
+    //         i = l;
+    //     }
 
-    } else if ( m == min) {
+    // } else if ( m == min) {
 
-        if ( r == max ) {
-            i = l;
-        } else {
-            i = r;
-        }
+    //     if ( r == max ) {
+    //         i = l;
+    //     } else {
+    //         i = r;
+    //     }
 
-    }
+    // }
 
     long pivot = array[i];
     array[i] = array[right];
