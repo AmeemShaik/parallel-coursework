@@ -164,12 +164,31 @@ int partition(long *array, int left, int right){
     min = (min < r) ? min : r;
     max = (l > m) ? l : m;
     max = (max > r) ? max : r;
-    if (l == min && r == max) {
-        i = m;
-    } else if (l == min && m == max) {
-        i = r;
-    } else {
-        i = l;
+
+    if ( l == min) {
+
+        if ( m == max) {
+            i = r;
+        } else {
+            i = m;
+        }
+
+    } else if ( r == min) {
+
+        if ( l == max ) {
+            i = m;
+        } else {
+            i = l;
+        }
+
+    } else if ( m == min) {
+
+        if ( r == max ) {
+            i = l;
+        } else {
+            i = r;
+        }
+
     }
 
     long pivot = array[i];
