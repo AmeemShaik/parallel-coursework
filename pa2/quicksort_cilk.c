@@ -21,10 +21,6 @@ double wctime() {
     return (tv.tv_sec + 1E-6 * tv.tv_usec);
 }
 
-int min(int x, int y){
-    return (x < y) ? x : y;
-}
-
 double log2( double n )  
 {  
     return log( n ) / log( 2 );  
@@ -92,7 +88,6 @@ void parallel_prefix_sum(lte_gt *S, int left, int n, int k) {
 
     int i, h;
     for(h = 1 ; h <= k ; h++) {
-        #pragma cilk grainsize = min(2048, (n) / (GRAIN_FACTOR*WORKERS))
         cilk_for (i = 1; i <= (n >> h); i++) {
             S[left+i * (1 << h) - 1].lte += S[left+(1 << h) * i - (1 << (h-1)) - 1].lte;
             S[left+i * (1 << h) - 1].gt += S[left+(1 << h) * i - (1 << (h-1)) - 1].gt;
@@ -100,7 +95,6 @@ void parallel_prefix_sum(lte_gt *S, int left, int n, int k) {
     }
 
     for (h = k ; h >= 1; h--) {
-        #pragma cilk grainsize = min(2048, (n) / (GRAIN_FACTOR*WORKERS))
         cilk_for(i = 2; i <= (n >> (h-1)); i++){
             if (i % 2) {
                 S[left+i * (1 << (h-1)) -1].lte += S[left+i * (1 << (h-1)) - (1 << (h-1)) - 1].lte;
@@ -157,13 +151,32 @@ int partition(long *array, int left, int right){
         i;
 
     // Get a random pivot
-    i = random_int(left, right);
+    // i = random_int(left, right);
+
+    int l, m, r;
+    l = array[left];
+    m = array[left/2 + right/2];
+    r = array[right];
+
+    // Pick an appropriate pivot based on 3-sample
+    int min, max;
+    min = (l < m) ? l : m;
+    min = (min < r) ? min : r;
+    max = (l > m) ? l : m;
+    max = (max > r) ? max : r;
+    if (l == min && r == max) {
+        i = m;
+    } else if (l == min && m == max) {
+        i = r;
+    } else {
+        i = l;
+    }
+
     long pivot = array[i];
     array[i] = array[right];
     array[right] = pivot;
     // Set flags in comparison flag arrays
     // Don't need eq anymore, just keep it in lt (except the pivot)
-    #pragma cilk grainsize = min(2048, (right-left+1) / (GRAIN_FACTOR*WORKERS))
     cilk_for (i = left; i <= right; i++) {
         copyArray[i] = array[i];
         if (array[i] < pivot) {
@@ -191,7 +204,6 @@ int partition(long *array, int left, int right){
     array[pivotIndex] = pivot;
     // Now use these mappings to swap in parallel
     // Note, we don't look at i = right, since its the pivot
-    #pragma cilk grainsize = min(2048, (right-left+1) / (GRAIN_FACTOR*WORKERS))
     cilk_for (i = left; i < right; i++){
         if(copyArray[i]<=pivot){
             array[left+flags[i].lte-1] = copyArray[i];
