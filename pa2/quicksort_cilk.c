@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 
@@ -12,6 +12,13 @@
 
 // Fudge factor on grain size (default = 8)
 #define GRAIN_FACTOR 8
+
+/* wall-clock time in seconds for POSIX-compliant clocks */
+double wctime() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec + 1E-6 * tv.tv_usec);
+}
 
 int min(int x, int y){
     return (x < y) ? x : y;
@@ -248,7 +255,7 @@ void quicksort(long *array, int size) {
 
 int main(int argc, char **argv) {
 
-    clock_t start, stop;
+    double start ,stop;
     double time_elapsed;
 
     if(argc < 2){
@@ -275,10 +282,10 @@ int main(int argc, char **argv) {
     dbg_printf("Unsorted Array\n");
     dbg_printArray(array, 0, size-1);
 
-    start = clock();
+    start = wctime();
     quicksort(array, size);
-    stop = clock();
-    time_elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
+    stop = wctime();
+    time_elapsed = (double) (stop - start);
 
     dbg_printf("Sorted Array\n");
     dbg_printArray(array, 0, size-1);

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 
 #define LOWLIMIT 100000
 
@@ -9,10 +9,18 @@ int partition(long *array,int left,int right);
 void printArray(long *A, int lo, int hi);
 
 static unsigned int size;
+
+/* wall-clock time in seconds for POSIX-compliant clocks */
+double wctime() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec + 1E-6 * tv.tv_usec);
+}
+
 int main(int argc, char **argv)
 {
 
-    clock_t start, stop;
+    double start, stop;
     double time_elapsed;
 
     if(argc!=2){
@@ -35,10 +43,10 @@ int main(int argc, char **argv)
 
     int left = 0;
     int right = size-1;
-    start = clock();
+    start = wctime();
     quicksort(array, left, right);
-    stop = clock();
-    time_elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
+    stop = wctime();
+    time_elapsed = (double) (stop - start);
 
     #ifdef PRINTMODE
     printf("Sorted Array\n");
