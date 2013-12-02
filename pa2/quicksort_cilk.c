@@ -298,6 +298,8 @@ int main(int argc, char **argv) {
     } else {
         WORKERS =  __cilkrts_get_nworkers(); 
     }
+
+     __cilkrts_set_param("nworkers", argv[2]);
     printf("Using %d available workers.\n", WORKERS);
 
     int size = atoi(argv[1]);
