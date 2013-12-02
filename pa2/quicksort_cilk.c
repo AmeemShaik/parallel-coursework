@@ -9,10 +9,22 @@
 
 // Array size at which to degrade to insertion sort.
 #define SERIAL_INSERTION_NSIZE 32
-#define SERIAL_QUICKSORT_NSIZE 2048
+#define SERIAL_PARTITION_N_FACTOR 0.7
 
 // Fudge factor on grain size (default = 8)
 #define GRAIN_FACTOR 8
+
+typedef struct{
+    int lte;
+    int gt;
+} lte_gt;
+
+lte_gt *flags;
+long *copyArray;    
+
+// Cilk constant: # workers
+int WORKERS,
+    PROBLEM_SIZE;
 
 /* wall-clock time in seconds for POSIX-compliant clocks */
 double wctime() {
@@ -26,16 +38,6 @@ double log2( double n )
     return log( n ) / log( 2 );  
 }
 
-typedef struct{
-    int lte;
-    int gt;
-} lte_gt;
-
-lte_gt *flags;
-long *copyArray;    
-
-// Cilk constant: # workers
-int WORKERS;
 
 void dbg_printf(const char *fmt, ...)
 {
@@ -257,7 +259,7 @@ void quicksort_recursive(long *array,int left,int right){
     else {
        // int  splitPoint = partition(array,left, right,copyArray);
         int splitPoint;
-        if (right - left + 1 < SERIAL_QUICKSORT_NSIZE) {
+        if (right - left + 1 <= SERIAL_PARTITION_N_FACTOR * PROBLEM_SIZE) {
             splitPoint = serial_partition(array,left, right);
         }
         else{
@@ -299,30 +301,31 @@ int main(int argc, char **argv) {
         WORKERS =  __cilkrts_get_nworkers(); 
     }
 
+    PROBLEM_SIZE = atoi(argv[1]);
+
      __cilkrts_set_param("nworkers", argv[2]);
     printf("Using %d available workers.\n", WORKERS);
 
-    int size = atoi(argv[1]);
     long *array;
-    array = malloc(size*sizeof(long));
+    array = malloc(PROBLEM_SIZE*sizeof(long));
     int i;
     srand(time(NULL));
 
-    for(i = 0; i < size; i++){
-        long r = rand()%size;
+    for(i = 0; i < PROBLEM_SIZE; i++){
+        long r = rand()%PROBLEM_SIZE;
         array[i] = r;
     }
 
     dbg_printf("Unsorted Array\n");
-    dbg_printArray(array, 0, size-1);
+    dbg_printArray(array, 0, PROBLEM_SIZE-1);
 
     start = wctime();
-    quicksort(array, size);
+    quicksort(array, PROBLEM_SIZE);
     stop = wctime();
     time_elapsed = (double) (stop - start);
 
     dbg_printf("Sorted Array\n");
-    dbg_printArray(array, 0, size-1);
-    printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
+    dbg_printArray(array, 0, PROBLEM_SIZE-1);
+    printf("Time elapsed for %d elements: %f seconds.\n", PROBLEM_SIZE, time_elapsed);
     return 0;
 }

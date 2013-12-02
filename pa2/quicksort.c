@@ -3,8 +3,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define LOWLIMIT 100000
-
 void quicksort(long *array,int left,int right);
 int partition(long *array,int left,int right);
 void printArray(long *A, int lo, int hi);
