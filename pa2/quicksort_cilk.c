@@ -9,7 +9,7 @@
 
 // Array size at which to degrade to insertion sort.
 #define SERIAL_INSERTION_NSIZE 32
-#define SERIAL_PARTITION_N_FACTOR 0.7
+#define SERIAL_PARTITION_N_FACTOR 0.8
 
 // Fudge factor on grain size (default = 8)
 #define GRAIN_FACTOR 8
@@ -160,39 +160,6 @@ int partition(long *array, int left, int right){
     m = array[left/2 + right/2];
     r = array[right];
 
-    // Pick an appropriate pivot based on 3-sample
-    // int min, max;
-    // min = (l < m) ? l : m;
-    // min = (min < r) ? min : r;
-    // max = (l > m) ? l : m;
-    // max = (max > r) ? max : r;
-
-    // if ( l == min) {
-
-    //     if ( m == max) {
-    //         i = r;
-    //     } else {
-    //         i = m;
-    //     }
-
-    // } else if ( r == min) {
-
-    //     if ( l == max ) {
-    //         i = m;
-    //     } else {
-    //         i = l;
-    //     }
-
-    // } else if ( m == min) {
-
-    //     if ( r == max ) {
-    //         i = l;
-    //     } else {
-    //         i = r;
-    //     }
-
-    // }
-
     long pivot = array[i];
     array[i] = array[right];
     array[right] = pivot;
@@ -284,8 +251,6 @@ void quicksort(long *array, int size) {
 
     quicksort_recursive(array, 0, size-1);
 }
-
-
 
 int main(int argc, char **argv) {
 
