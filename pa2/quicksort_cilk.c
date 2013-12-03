@@ -53,7 +53,6 @@ void dbg_printf(const char *fmt, ...)
 long random_int (unsigned int low, unsigned int high)
 {
       int worker_id = __cilkrts_get_worker_number();
-      printf("worker_id = %d\n", worker_id);
       unsigned int random;
       if (worker_id == 0) {
         random = rand();
