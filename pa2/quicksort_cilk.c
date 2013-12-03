@@ -21,6 +21,7 @@ typedef struct{
 
 lte_gt *flags;
 long *copyArray;    
+unsigned short **thread_specific_random_state;
 
 // Cilk constant: # workers
 int WORKERS,
@@ -52,24 +53,28 @@ void dbg_printf(const char *fmt, ...)
 // Random int from [low, high)
 long random_int (unsigned int low, unsigned int high)
 {
-      int worker_id = __cilkrts_get_worker_number();
-      unsigned int random;
-      if (worker_id == 0) {
+    int worker_id = __cilkrts_get_worker_number();
+    unsigned int random;
+    if (worker_id == 0) {
         random = rand();
-      } else {
-        random = rand_r(&worker_id);
-      }
+    } else {
+        unsigned short *state = thread_specific_random_state[worker_id];
+        random = nrand48(state);
+    }
 
-random = rand_r(&worker_id);
-  if (RAND_MAX == random) return random_int(low, high);
-  int range = high - low,
-      remain = RAND_MAX % range,
-      slot = RAND_MAX / range;
-  if (random < RAND_MAX - remain) {
-    return low + random / slot;
-  } else {
-    return random_int (low, high);
-  }
+    if (RAND_MAX == random) {
+        return random_int(low, high);
+    }
+
+    int range = high - low,
+        remain = RAND_MAX % range,
+        slot = RAND_MAX / range;
+
+    if (random < RAND_MAX - remain) {
+        return low + random / slot;
+    } else {
+        return random_int (low, high);
+    }
 }
 
 void printArray(long *A, int lo, int hi){
@@ -275,14 +280,17 @@ int main(int argc, char **argv) {
     }
 
     PROBLEM_SIZE = atoi(argv[1]);
-
-     __cilkrts_set_param("nworkers", argv[2]);
-    printf("Using %d available workers.\n", WORKERS);
-
     long *array;
     array = malloc(PROBLEM_SIZE*sizeof(long));
     int i;
     srand(time(NULL));
+
+     __cilkrts_set_param("nworkers", argv[2]);
+    printf("Using %d available workers.\n", WORKERS);
+    thread_specific_random_state = (unsigned short **) malloc (WORKERS * sizeof(unsigned short*));
+    for(i = 0; i < WORKERS; i++) {
+        thread_specific_random_state[i] = malloc(3 * sizeof(unsigned short));
+    }
 
     for(i = 0; i < PROBLEM_SIZE; i++){
         long r = rand()%PROBLEM_SIZE;
