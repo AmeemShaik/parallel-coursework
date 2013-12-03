@@ -100,7 +100,7 @@ void quicksort(long *array,int left,int right){
 }
 int partition(long *array,int left,int right){
     long temp;
-    long pivot = array[random_int(left, right+1)];
+    long pivot = array[right];
     int i = left-1;
     int j;
     for(j=left; j<right;j++){

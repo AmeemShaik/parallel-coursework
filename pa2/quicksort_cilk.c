@@ -166,16 +166,10 @@ int partition(long *array, int left, int right){
         i;
 
     // Get a random pivot
-    i = random_int(left, right+1);
+    // i = random_int(left, right+1);
 
-    int l, m, r;
-    l = array[left];
-    m = array[left/2 + right/2];
-    r = array[right];
-
-    long pivot = array[i];
-    array[i] = array[right];
-    array[right] = pivot;
+        // Use right as pivot since we already randomized the array.
+    long pivot = array[right];
     // Set flags in comparison flag arrays
     // Don't need eq anymore, just keep it in lt (except the pivot)
     cilk_for (i = left; i <= right; i++) {
