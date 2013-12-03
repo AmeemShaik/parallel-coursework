@@ -9,10 +9,7 @@
 
 // Array size at which to degrade to insertion sort.
 #define SERIAL_INSERTION_NSIZE 32
-#define SERIAL_PARTITION_N_FACTOR 0.8
-
-// Fudge factor on grain size (default = 8)
-#define GRAIN_FACTOR 8
+#define SERIAL_PARTITION_N_FACTOR 0.7
 
 typedef struct{
     int lte;
@@ -21,7 +18,6 @@ typedef struct{
 
 lte_gt *flags;
 long *copyArray;    
-unsigned short **thread_specific_random_state;
 
 // Cilk constant: # workers
 int WORKERS,
@@ -53,14 +49,7 @@ void dbg_printf(const char *fmt, ...)
 // Random int from [low, high)
 long random_int (unsigned int low, unsigned int high)
 {
-    int worker_id = __cilkrts_get_worker_number();
-    unsigned int random;
-    if (worker_id == 0) {
-        random = rand();
-    } else {
-        unsigned short *state = thread_specific_random_state[worker_id];
-        random = nrand48(state);
-    }
+    int random = rand();
 
     if (RAND_MAX == random) {
         return random_int(low, high);
@@ -277,18 +266,14 @@ int main(int argc, char **argv) {
     long *array;
     array = malloc(PROBLEM_SIZE*sizeof(long));
     int i;
-    srand(time(NULL));
 
      __cilkrts_set_param("nworkers", argv[2]);
     dbg_printf("Using %d available workers.\n", WORKERS);
-    thread_specific_random_state = (unsigned short **) malloc (WORKERS * sizeof(unsigned short*));
-    for(i = 0; i < WORKERS; i++) {
-        thread_specific_random_state[i] = malloc(3 * sizeof(unsigned short));
-    }
 
-    for(i = 0; i < PROBLEM_SIZE; i++){
-        long r = rand()%PROBLEM_SIZE;
-        array[i] = r;
+    // Initialize array with uniformly random values. Do in cilk_for to warm cache.
+    srand(time(NULL));
+    cilk_for(i = 0; i < PROBLEM_SIZE; i++){
+        array[i] = random_int(0, PROBLEM_SIZE);
     }
 
     dbg_printf("Unsorted Array\n");

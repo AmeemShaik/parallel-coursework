@@ -47,9 +47,9 @@ int main(int argc, char **argv)
     int i;
     srand(time(NULL));
 
+    // Initialize uniformly distributed input array
     for(i = 0; i < size; i++){
-        long r = rand() % size;
-        array[i] = r;
+        array[i] = random_int(0, size);
     }
 
     #ifdef PRINTMODE
