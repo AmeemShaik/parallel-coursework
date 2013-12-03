@@ -52,7 +52,16 @@ void dbg_printf(const char *fmt, ...)
 // Random int from [low, high)
 long random_int (unsigned int low, unsigned int high)
 {
-  int random = rand();
+      int worker_id = __cilkrts_get_worker_number();
+      printf("worker_id = %d\n", worker_id);
+      unsigned int random;
+      if (worker_id == 0) {
+        random = rand();
+      } else {
+        random = rand_r(&worker_id);
+      }
+
+random = rand_r(&worker_id);
   if (RAND_MAX == random) return random_int(low, high);
   int range = high - low,
       remain = RAND_MAX % range,
