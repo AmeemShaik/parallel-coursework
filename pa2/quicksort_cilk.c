@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
     srand(time(NULL));
 
      __cilkrts_set_param("nworkers", argv[2]);
-    printf("Using %d available workers.\n", WORKERS);
+    dbg_printf("Using %d available workers.\n", WORKERS);
     thread_specific_random_state = (unsigned short **) malloc (WORKERS * sizeof(unsigned short*));
     for(i = 0; i < WORKERS; i++) {
         thread_specific_random_state[i] = malloc(3 * sizeof(unsigned short));
@@ -307,6 +307,6 @@ int main(int argc, char **argv) {
 
     dbg_printf("Sorted Array\n");
     dbg_printArray(array, 0, PROBLEM_SIZE-1);
-    printf("Time elapsed for %d elements: %f seconds.\n", PROBLEM_SIZE, time_elapsed);
+    printf("parallel, %d, %d, %f\n", PROBLEM_SIZE, WORKERS, time_elapsed);
     return 0;
 }

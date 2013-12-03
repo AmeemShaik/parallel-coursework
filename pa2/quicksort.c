@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     printf("Sorted Array\n");
     printArray(array,0, size-1);
     #endif
-    printf("Time elapsed for %d elements: %f seconds.\n", size, time_elapsed);
+    printf("sequential, %d, %d, %f\n", size, 1, time_elapsed);
     return 0;
 }
 

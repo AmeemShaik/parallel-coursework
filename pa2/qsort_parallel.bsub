@@ -2,6 +2,7 @@
 #BSUB -n 16 
 #BSUB –R “span[hosts=1]”
 
+echo "Algorithm, Input Size,  Workers, Sort Time (seconds)"
 ./quicksort 250000
 ./quicksort_cilk 250000 2
 ./quicksort_cilk 250000 4
