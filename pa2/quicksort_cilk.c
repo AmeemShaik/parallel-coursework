@@ -25,14 +25,15 @@
  *
  */
 
+/* Standard includes */
 #include <math.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
+
+/* Custom includes */
+#include "quicksort_common.h"
 
 // Array size at which to degrade to insertion sort.
 #define SERIAL_INSERTION_NSIZE 32
@@ -50,67 +51,11 @@ long *copyArray;
 int WORKERS,
     PROBLEM_SIZE;
 
-/* wall-clock time in seconds for POSIX-compliant clocks */
-double wctime() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (tv.tv_sec + 1E-6 * tv.tv_usec);
-}
-
 double log2( double n )  
 {  
     return log( n ) / log( 2 );  
 }
 
-
-void dbg_printf(const char *fmt, ...)
-{
-    #ifdef PRINTMODE
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-    #endif
-}
-
-// Random int from [low, high)
-long random_int (unsigned int low, unsigned int high)
-{
-    int random = rand();
-
-    if (RAND_MAX == random) {
-        return random_int(low, high);
-    }
-
-    int range = high - low,
-        remain = RAND_MAX % range,
-        slot = RAND_MAX / range;
-
-    if (random < RAND_MAX - remain) {
-        return low + random / slot;
-    } else {
-        return random_int (low, high);
-    }
-}
-
-void printArray(long *A, int lo, int hi){
-    int i;
-
-    printf("[");
-    for (i = lo; i <= hi ; i++) {
-        printf("%ld", A[i]);
-        if ( i != hi) {
-            printf(", ");
-        }
-    }
-    printf("]\n");
-}
-
-void dbg_printArray(long *A, int lo, int hi) {
-    #ifdef PRINTMODE
-    printArray(A, lo, hi);
-    #endif
-}
 /* Inclusive, in-place parallel prefix sum. 
     Takes an input X[1..n], n=2^k and produces
     an output S[1..n], a vector of prefix sums.
@@ -135,15 +80,8 @@ void parallel_prefix_sum(lte_gt *S, int left, int n, int k) {
     }
 
 }
-void serial_prefix_sum(long *S, int left, int n){
-    int i;
-    int sum = 0;
-    for(i = 0; i < n; i++){
-      sum+=S[left+i];
-      S[left+i] = sum;
-    }
-}
-void serial_insertionSort(long *array, int left, int right) {
+
+void sequential_insertionSort(long *array, int left, int right) {
 
     int i, j, val;
     for(i = left; i <= right; i++) {
@@ -155,24 +93,6 @@ void serial_insertionSort(long *array, int left, int right) {
         }
         array[j+1] = val;
     }
-}
-
-int serial_partition(long *array,int left,int right){
-    long temp;
-    long pivot = array[right];
-    int i = left-1;
-    int j;
-    for(j=left; j<right;j++){
-        if(array[j]<pivot){
-            i++;
-            temp = array[j];
-            array[j]=array[i];
-            array[i]= temp;
-        }
-    }
-    array[right] = array[i+1];     
-    array[i+1]=pivot;
-    return i+1;
 }
 
 int partition(long *array, int left, int right){
@@ -207,9 +127,7 @@ int partition(long *array, int left, int right){
             flags[i].gt=0;
         }
     }
-   parallel_prefix_sum(flags, left, n,k);
-    // serial_prefix_sum(lt,left,n);
-    // serial_prefix_sum(gt,left,n);
+    parallel_prefix_sum(flags, left, n,k);
     int pivotIndex = left+flags[right].lte;
     //add the pivot
     array[pivotIndex] = pivot;
@@ -226,14 +144,6 @@ int partition(long *array, int left, int right){
     return pivotIndex;
 }
 
-void serial_quicksort(long *array,int left,int right){
-    if(left<right){
-        int splitPoint = serial_partition(array,left, right);
-        serial_quicksort(array,left,splitPoint-1);
-        serial_quicksort(array,splitPoint+1,right);
-    }
-}
-
 void quicksort_recursive(long *array,int left,int right){
 
    // dbg_printf("quicksort(array, %d, %d)\n", left, right);
@@ -244,13 +154,13 @@ void quicksort_recursive(long *array,int left,int right){
 
     //First see if we've degraded to serial insertion sort.
     if (right - left + 1 < SERIAL_INSERTION_NSIZE) {
-        return serial_insertionSort(array, left, right);
+        return sequential_insertionSort(array, left, right);
     }
     else {
        // int  splitPoint = partition(array,left, right,copyArray);
         int splitPoint;
         if (right - left + 1 <= SERIAL_PARTITION_N_FACTOR * PROBLEM_SIZE) {
-            splitPoint = serial_partition(array,left, right);
+            splitPoint = sequential_partition(array,left, right);
         }
         else{
             splitPoint = partition(array,left, right);

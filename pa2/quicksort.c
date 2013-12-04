@@ -14,43 +14,19 @@
  *    Pivot selection: always choose right (since input array is random).
  */
 
-
+/* Standard includes */
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 
-void quicksort(long *array,int left,int right);
-int partition(long *array,int left,int right);
-void printArray(long *A, int lo, int hi);
-
-static unsigned int size;
-
-/* wall-clock time in seconds for POSIX-compliant clocks */
-double wctime() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (tv.tv_sec + 1E-6 * tv.tv_usec);
-}
-
-// Random int from [low, high)
-long random_int (unsigned int low, unsigned int high)
-{
-  int random = rand();
-  if (RAND_MAX == random) return random_int(low, high);
-  int range = high - low,
-      remain = RAND_MAX % range,
-      slot = RAND_MAX / range;
-  if (random < RAND_MAX - remain) {
-    return low + random / slot;
-  } else {
-    return random_int (low, high);
-  }
-}
+/* Custom includes */
+#include "quicksort_common.h"
 
 int main(int argc, char **argv)
 {
 
+    int problem_size;
     double start, stop;
     double time_elapsed;
 
@@ -58,77 +34,33 @@ int main(int argc, char **argv)
         printf("Incorrect number of arguments, expected 1 argument\n");
         return EXIT_FAILURE;
     }
-    size = atoi(argv[1]);
+    problem_size = atoi(argv[1]);
     long *array;
-    array = malloc(size*sizeof(long));
+    array = malloc(problem_size*sizeof(long));
     int i;
     srand(time(NULL));
 
     // Initialize uniformly distributed input array
-    for(i = 0; i < size; i++){
-        array[i] = random_int(0, size);
+    for(i = 0; i < problem_size; i++){
+        array[i] = random_int(0, problem_size);
     }
 
     #ifdef PRINTMODE
     printf("Unsorted Array\n");
-    printArray(array,0, size-1);
+    printArray(array,0, problem_size-1);
     #endif
 
     int left = 0;
-    int right = size-1;
+    int right = problem_size-1;
     start = wctime();
-    quicksort(array, left, right);
+    sequential_partition(array, left, right);
     stop = wctime();
     time_elapsed = (double) (stop - start);
 
     #ifdef PRINTMODE
     printf("Sorted Array\n");
-    printArray(array,0, size-1);
+    printArray(array,0, problem_size-1);
     #endif
-    printf("sequential, %d, %d, %f\n", size, 1, time_elapsed);
+    printf("sequential, %d, %d, %f\n", problem_size, 1, time_elapsed);
     return 0;
-}
-
-void printArray(long *A, int lo, int hi){
-    int i;
-
-    printf("[");
-    for (i = lo; i <= hi ; i++) {
-        printf("%ld", A[i]);
-        if ( i != hi) {
-            printf(", ");
-        }
-    }
-    printf("]\n");
-}
-
-void dbg_printArray(long *A, int lo, int hi) {
-    #ifdef PRINTMODE
-    printArray(A, lo, hi);
-    #endif
-}
-
-void quicksort(long *array,int left,int right){
-    if(left<right){
-        int splitPoint = partition(array,left, right);
-        quicksort(array,left,splitPoint-1);
-        quicksort(array,splitPoint+1,right);
-    }
-}
-int partition(long *array,int left,int right){
-    long temp;
-    long pivot = array[right];
-    int i = left-1;
-    int j;
-    for(j=left; j<right;j++){
-        if(array[j]<pivot){
-            i++;
-            temp = array[j];
-            array[j]=array[i];
-            array[i]= temp;
-        }
-    }
-    array[right] = array[i+1];     
-    array[i+1]=pivot;
-    return i+1;
 }
