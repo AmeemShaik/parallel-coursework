@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     int left = 0;
     int right = problem_size-1;
     start = wctime();
-    sequential_partition(array, left, right);
+    sequential_quicksort(array, left, right);
     stop = wctime();
     time_elapsed = (double) (stop - start);
 
