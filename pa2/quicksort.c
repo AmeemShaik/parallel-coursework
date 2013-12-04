@@ -1,3 +1,20 @@
+/*
+ * quicksort.c : A sequential quicksort implementation for comparison.
+ *  
+ *  Authors: Ameem Shaik and Zach Cross
+ *  See README for details regarding compilation/dependencies.
+ *
+ *  Usage details:
+ *      
+ *      Uniformly random input array of size specified by argv[1].
+ * 
+ *  Implementation details (high level):
+ *      
+ *    Partition approach: typical efficient in-place swapping.
+ *    Pivot selection: always choose right (since input array is random).
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

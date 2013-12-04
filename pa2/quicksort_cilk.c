@@ -1,3 +1,30 @@
+/*
+ * quicksort_cilk.c : A parallel quicksort implementation using cilkplus.
+ *  
+ *  Authors: Ameem Shaik and Zach Cross
+ *  See README for details regarding compilation/dependencies.
+ *
+ *  Usage details:
+ *      
+ *      Uniformly random input array of size specified by argv[1].
+ *      Number of cilk workers utilized optionally specified by argv[2].
+ * 
+ *  Implementation details (high level):
+ *      
+ *    Partition approach: SCAN-based partition using comparison flags.
+ *    Pivot selection: always choose right (since input array is random).
+ *    
+ *  Optimizations (worth noting):
+ * 
+ *    Memory layout of comparison flags (interleaved) allows for one call
+ *    to prefix sum rather than two per partition.
+ *
+ *    Degradation to sequential quicksort and sequential insertion sort
+ *    based on input size of subproblem being a factor of "original"
+ *    input size specified by argv[1].
+ *
+ */
+
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
