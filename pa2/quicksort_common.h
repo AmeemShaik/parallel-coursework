@@ -1,3 +1,11 @@
+/*
+ * quicksort_common.c : Code common to quicksort.c and quicksort_cilk.c
+ *  
+ *  Authors: Ameem Shaik and Zach Cross
+ *  See README for details regarding compilation/dependencies.
+ *
+ */
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
