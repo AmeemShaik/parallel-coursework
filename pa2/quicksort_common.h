@@ -6,6 +6,7 @@
  *
  */
 
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +15,12 @@
 /************************************************
  *  HELPERS.
  ***********************************************/ 
+
+/* Compute the log base 2. Apparently math.h log2 is not portable. */
+double log2( double n )  
+{  
+    return log( n ) / log( 2 );  
+}
 
 /* Generated a random integer in [low, high). */
 int random_int (unsigned int low, unsigned int high)

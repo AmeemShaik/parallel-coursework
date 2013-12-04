@@ -14,12 +14,6 @@
  *    Pivot selection: always choose right (since input array is random).
  */
 
-/* Standard includes */
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-
 /* Custom includes */
 #include "quicksort_common.h"
 
