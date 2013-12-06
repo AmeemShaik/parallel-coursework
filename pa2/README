@@ -1,0 +1,38 @@
+COMP633: PA2
+Parallel Quicksort
+Ameem Shaik & Zach Cross
+=========================
+
+Overview
+---------
+We offer a detailed writeup in the base directory, "Comp 633 PA2.docx". This README mainly offers a commentary on how to compile and run the program (and how to recreate our experimental data).
+
+Requirements
+-------------
+gcc cilkplus branch (4.8 used by us)
+{or}
+icc version >+ 14.0 (available on killdevil via module load intel/14.0)
+
+Test environment
+-----------------
+We ran experiments on killdevil.unc.edu.
+We used a python script to generate configure/deploy experiments (see generate_bsub.py)
+    Usage: python generate_bsub.py <{gcc, icc}> <MAX_WORKERS> <TRIALS> | bsub
+
+Usage
+------
+The above script does everything: compiles the code with the specified compiler and queues up the work load for execution on a compute node. Furthermore, the program itself produces CSV-ready outputs which aided us in analyzing our performance data. You should be able to recreate our results using the python script.
+
+Alternative options for running manually:
+
+    'make icc' or 'make gcc' will produce binaries for the sequential and parallel versions of quicksort with and without printing enabled.
+
+    The respective binaries all feature self explanatory arguments and will produce identical results of csv rows corresponding to the following headers:
+
+    Algorithm, Input Size,  Workers, Sort Time (seconds)
+
+Questions?
+-----------
+Email Ameem or Zach.
+
+Thanks!
